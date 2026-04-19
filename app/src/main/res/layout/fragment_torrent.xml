@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp"
+    android:background="@color/bg_primary">
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="@string/tab_torrents" android:textSize="22sp"
+        android:textStyle="bold" android:textColor="@color/text_primary"
+        android:paddingBottom="8dp" />
+
+    <TextView android:id="@+id/engine_status"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="@color/brand_accent" android:textSize="12sp"
+        android:paddingBottom="10dp" />
+
+    <EditText android:id="@+id/input_magnet"
+        android:layout_width="match_parent" android:layout_height="48dp"
+        android:hint="@string/hint_magnet" android:singleLine="true"
+        android:inputType="textUri" android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:background="@color/bg_surface" android:paddingHorizontal="12dp" />
+
+    <Button android:id="@+id/btn_add_magnet"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="@string/add_magnet" android:backgroundTint="@color/brand_orange"
+        android:textColor="@color/white" android:layout_marginTop="8dp" />
+
+    <TextView android:id="@+id/empty_state"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="center" android:padding="24dp"
+        android:textColor="@color/text_muted" android:text="@string/empty_torrents"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_torrents"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:paddingTop="12dp" />
+</LinearLayout>

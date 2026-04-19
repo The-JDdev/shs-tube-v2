@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_primary">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:gravity="center_horizontal">
+
+        <ImageView
+            android:layout_width="160dp" android:layout_height="160dp"
+            android:src="@drawable/dev_shobuj"
+            android:scaleType="centerCrop"
+            android:background="@drawable/circle_bg"
+            android:clipToOutline="true"
+            android:contentDescription="developer photo"
+            android:layout_marginTop="12dp" />
+
+        <TextView android:id="@+id/dev_name"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textSize="24sp" android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginTop="14dp" />
+
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Founder &amp; Developer — SHS LAB"
+            android:textColor="@color/brand_accent"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/divider" android:layout_marginVertical="20dp" />
+
+        <TextView android:id="@+id/dev_email"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="@color/text_secondary" android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView android:id="@+id/bkash_number"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="@color/brand_accent" android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button android:id="@+id/btn_copy_bkash"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Copy bKash number"
+            android:backgroundTint="@color/brand_orange"
+            android:textColor="@color/white"
+            android:layout_marginTop="8dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/divider" android:layout_marginVertical="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Get in touch"
+            android:textColor="@color/text_primary" android:textSize="16sp"
+            android:textStyle="bold" android:layout_marginBottom="10dp" />
+
+        <Button android:id="@+id/btn_email"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="📧  Email — jdvijay878@gmail.com"
+            android:backgroundTint="@color/bg_elevated"
+            android:textColor="@color/text_primary"
+            android:textAllCaps="false"
+            android:layout_marginVertical="4dp" />
+
+        <Button android:id="@+id/btn_facebook"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="📘  Facebook — @itsshsshobuj"
+            android:backgroundTint="@color/brand_blue"
+            android:textColor="@color/white"
+            android:textAllCaps="false"
+            android:layout_marginVertical="4dp" />
+
+        <Button android:id="@+id/btn_telegram"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="✈  Telegram — @aamoviesofficial"
+            android:backgroundTint="#0088CC"
+            android:textColor="@color/white"
+            android:textAllCaps="false"
+            android:layout_marginVertical="4dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/divider" android:layout_marginVertical="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="SHS Tube v2.0 — 5-in-1 monolith"
+            android:textColor="@color/text_muted" android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Browser • Native AdBlock • Media Sniffer • yt-dlp Downloader • libtorrent4j Torrents"
+            android:textColor="@color/text_muted" android:textSize="11sp"
+            android:gravity="center" android:layout_marginTop="6dp" />
+    </LinearLayout>
+</ScrollView>

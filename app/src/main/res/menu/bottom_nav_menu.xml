@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/tab_browser"   android:title="@string/tab_browser"   android:icon="@drawable/ic_browser" />
+    <item android:id="@+id/tab_downloads" android:title="@string/tab_downloads" android:icon="@drawable/ic_download" />
+    <item android:id="@+id/tab_torrents"  android:title="@string/tab_torrents"  android:icon="@drawable/ic_torrent" />
+    <item android:id="@+id/tab_about"     android:title="@string/tab_about"     android:icon="@drawable/ic_about" />
+</menu>

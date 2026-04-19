@@ -1,0 +1,5 @@
+-keep class com.yausername.** { *; }
+-keep class org.libtorrent4j.** { *; }
+-keep class com.shslab.shstube.** { *; }
+-keepattributes JavascriptInterface
+-keepclassmembers class * { @android.webkit.JavascriptInterface <methods>; }

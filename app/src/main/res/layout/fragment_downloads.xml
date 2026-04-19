@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="12dp"
+    android:background="@color/bg_primary">
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="@string/tab_downloads" android:textSize="22sp"
+        android:textStyle="bold" android:textColor="@color/text_primary"
+        android:paddingBottom="12dp" />
+
+    <EditText android:id="@+id/input_url"
+        android:layout_width="match_parent" android:layout_height="48dp"
+        android:hint="@string/hint_paste_url"
+        android:singleLine="true" android:inputType="textUri"
+        android:textColor="@color/text_primary" android:textColorHint="@color/text_muted"
+        android:background="@color/bg_surface" android:paddingHorizontal="12dp" />
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:paddingTop="8dp">
+
+        <Button android:id="@+id/btn_add_url"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:text="@string/add"
+            android:backgroundTint="@color/brand_blue"
+            android:textColor="@color/white" />
+
+        <Space android:layout_width="6dp" android:layout_height="wrap_content"/>
+
+        <Button android:id="@+id/btn_direct"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:text="@string/download_direct"
+            android:backgroundTint="@color/success"
+            android:textColor="@color/white" />
+
+        <Space android:layout_width="6dp" android:layout_height="wrap_content"/>
+
+        <Button android:id="@+id/btn_ytdlp"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:text="@string/download_ytdlp"
+            android:backgroundTint="@color/brand_orange"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+    <TextView android:id="@+id/empty_state"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="center" android:padding="24dp"
+        android:textColor="@color/text_muted" android:text="@string/empty_downloads"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_downloads"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:paddingTop="12dp" />
+</LinearLayout>

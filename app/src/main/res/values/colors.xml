@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_orange">#FF5722</color>
+    <color name="brand_orange_dark">#E64A19</color>
+    <color name="brand_blue">#1565C0</color>
+    <color name="brand_accent">#FFB300</color>
+    <color name="bg_primary">#0F1115</color>
+    <color name="bg_surface">#1A1D23</color>
+    <color name="bg_elevated">#252932</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B5BD</color>
+    <color name="text_muted">#6B7280</color>
+    <color name="divider">#2A2E37</color>
+    <color name="success">#4CAF50</color>
+    <color name="error">#F44336</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>
