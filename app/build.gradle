@@ -15,9 +15,9 @@ android {
         versionName "2.1.2-titan"
         vectorDrawables.useSupportLibrary = true
 
-        // Universal APK — ship every ABI
+        // armeabi-v7a only build (lean, builds in low-memory containers)
         ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+            abiFilters 'armeabi-v7a'
         }
     }
 
@@ -82,12 +82,9 @@ dependencies {
     implementation 'io.github.junkfood02.youtubedl-android:library:0.17.4'
     implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.17.4'
 
-    // libtorrent4j (the same native engine LibreTorrent uses) — universal: all 4 ABIs
+    // libtorrent4j (the same native engine LibreTorrent uses) — armeabi-v7a only
     implementation 'org.libtorrent4j:libtorrent4j:2.1.0-32'
-    implementation 'org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-32'
     implementation 'org.libtorrent4j:libtorrent4j-android-arm:2.1.0-32'
-    implementation 'org.libtorrent4j:libtorrent4j-android-x86:2.1.0-32'
-    implementation 'org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-32'
 
     // NewPipe Extractor — native, ad-free YouTube + 30 other services scraping
     implementation 'com.github.TeamNewPipe:NewPipeExtractor:v0.24.4'
