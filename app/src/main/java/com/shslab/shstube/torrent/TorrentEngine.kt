@@ -213,15 +213,20 @@ object TorrentEngine {
                 } else null
             } else null
 
-            // Try the rich download(TorrentInfo, File, File, byte[], Priority[], String[]) overload first
+            // PRIMARY: real upstream signature (libtorrent4j 2.x):
+            //   download(TorrentInfo ti, File saveDir, File resumeFile,
+            //            Priority[] priorities, List<TcpEndpoint> peers, torrent_flags_t flags)
+            // Setting priorities here is atomic — no race with the handle materializing.
             val started = if (priorityArr != null) try {
+                val flagsClass = Class.forName("org.libtorrent4j.swig.torrent_flags_t")
+                val flags = flagsClass.getConstructor().newInstance()
                 val m = sm.javaClass.getMethod(
                     "download",
                     tiClass, File::class.java, File::class.java,
-                    ByteArray::class.java, priorityArr.javaClass, Array<String>::class.java
+                    priorityArr.javaClass, java.util.List::class.java, flagsClass
                 )
-                m.invoke(sm, parsed.ti, savePath, null, null, priorityArr, null); true
-            } catch (_: NoSuchMethodException) { false } else false
+                m.invoke(sm, parsed.ti, savePath, null, priorityArr, null, flags); true
+            } catch (_: NoSuchMethodException) { false } catch (_: ClassNotFoundException) { false } else false
 
             if (!started) {
                 // Fallback: download(TorrentInfo, File) then prioritizeFiles(Priority[])
@@ -264,8 +269,11 @@ object TorrentEngine {
     fun addMagnet(magnet: String): String {
         val sm = session ?: return "ERROR: torrent engine not ready (${nativeError ?: "starting"})"
         return try {
-            val m = sm.javaClass.getMethod("download", String::class.java, File::class.java)
-            m.invoke(sm, magnet, savePath)
+            // Real upstream: download(String magnetUri, File saveDir, torrent_flags_t flags)
+            val flagsClass = Class.forName("org.libtorrent4j.swig.torrent_flags_t")
+            val flags = flagsClass.getConstructor().newInstance()
+            val m = sm.javaClass.getMethod("download", String::class.java, File::class.java, flagsClass)
+            m.invoke(sm, magnet, savePath, flags)
             val ih = Regex("xt=urn:btih:([A-Fa-f0-9]{40})").find(magnet)
                 ?.groupValues?.get(1)?.lowercase()
                 ?: ("magnet_${System.currentTimeMillis()}")
@@ -283,12 +291,9 @@ object TorrentEngine {
     private fun findHandleByInfoHash(sm: SessionManager, ih: String): TorrentHandle? {
         if (ih.isBlank() || ih.length != 40) return null
         return try {
+            // Upstream Sha1Hash has NO String ctor — only static parseHex(String)
             val sha1Class = Class.forName("org.libtorrent4j.Sha1Hash")
-            val sha1Inst = try {
-                sha1Class.getConstructor(String::class.java).newInstance(ih)
-            } catch (_: Throwable) {
-                sha1Class.getMethod("parseHex", String::class.java).invoke(null, ih)
-            }
+            val sha1Inst = sha1Class.getMethod("parseHex", String::class.java).invoke(null, ih)
             val findM = sm.javaClass.getMethod("find", sha1Class)
             findM.invoke(sm, sha1Inst) as? TorrentHandle
         } catch (_: Throwable) { null }
