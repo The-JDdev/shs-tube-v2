@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -24,18 +25,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.UUID
 
 /**
  * Foreground service that runs yt-dlp downloads off the UI thread, posts a sticky notification
  * with live progress, and persists every state change to Room.
- *
- * Start with:
- *   Intent(ctx, DownloadService::class.java).apply {
- *     putExtra(EXTRA_URL, url)
- *     putExtra(EXTRA_FORMAT_ID, formatId)   // null = best
- *     putExtra(EXTRA_AUDIO_ONLY, true|false)
- *     putExtra(EXTRA_TITLE, title)
- *   }.let { ContextCompat.startForegroundService(ctx, it) }
  */
 class DownloadService : Service() {
 
@@ -74,8 +68,16 @@ class DownloadService : Service() {
     override fun onCreate() {
         super.onCreate()
         ensureChannel()
-        // Promote to foreground IMMEDIATELY (within 5s of startForegroundService) — otherwise ANR
-        startForeground(NOTIF_ID_BASE, buildNotification("SHS Tube", "Preparing download…", 0, true))
+        // Promote to foreground IMMEDIATELY (within 5s of startForegroundService) — otherwise ANR.
+        // Android 14 (API 34) REQUIRES the foregroundServiceType parameter when the app declares
+        // FOREGROUND_SERVICE_DATA_SYNC — otherwise the platform throws
+        // MissingForegroundServiceTypeException / ForegroundServiceStartNotAllowedException.
+        val notif = buildNotification("SHS Tube", "Preparing download…", 0, true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIF_ID_BASE, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(NOTIF_ID_BASE, notif)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -100,7 +102,6 @@ class DownloadService : Service() {
     private suspend fun runJob(
         url: String, title: String, formatId: String?, audioOnly: Boolean, startId: Int
     ) {
-        // 1. Insert pending row
         val entity = DownloadEntity(
             url = url, title = title, mime = if (audioOnly) "audio" else "video",
             source = if (formatId == null) "share" else "share-${formatId}",
@@ -109,7 +110,6 @@ class DownloadService : Service() {
         val rowId = DownloadRepository.insert(entity)
         val notifId = NOTIF_ID_BASE + rowId.toInt()
 
-        // 2. Wait for yt-dlp to finish initialising (extracts python+yt-dlp on first run)
         if (!ShsTubeApp.ytDlpReady) {
             updateNotif(notifId, title, "Initialising yt-dlp engine…", 0, true)
             DownloadRepository.updateProgress(rowId, "initializing", 0, 0L, 0L, 0L)
@@ -121,10 +121,14 @@ class DownloadService : Service() {
             }
         }
 
-        // 3. Run download
+        // Prefix output filename with a unique tag so we can reliably identify *our* file even in
+        // the shared public Downloads directory (other apps write there too).
         val outDir = StoragePrefs.publicDownloadDir()
+        val downloadTag = "shstube_" + UUID.randomUUID().toString().take(8)
+        val outTemplate = File(outDir, "${downloadTag}__%(title)s.%(ext)s").absolutePath
+
         val req = YoutubeDLRequest(url).apply {
-            addOption("-o", File(outDir, "%(title)s.%(ext)s").absolutePath)
+            addOption("-o", outTemplate)
             addOption("--no-playlist")
             addOption("--no-mtime")
             addOption("--newline")
@@ -142,18 +146,15 @@ class DownloadService : Service() {
 
         DownloadRepository.updateProgress(rowId, "downloading", 0, 0L, 0L, 0L)
         var lastBytes = 0L
-        var lastTs = System.currentTimeMillis()
         var lastSpeed = 0L
 
         try {
             withContext(Dispatchers.IO) {
-                YoutubeDL.getInstance().execute(req) { progress, etaMs, line ->
+                YoutubeDL.getInstance().execute(req) { progress, _, line ->
                     val pct = progress.toInt().coerceIn(0, 100)
-                    // yt-dlp prints "[download]  35.2% of 12.34MiB at 1.23MiB/s ETA 00:08"
                     val (downloaded, total, speed) = parseLine(line, lastBytes, lastSpeed)
                     if (speed > 0) lastSpeed = speed
                     if (downloaded > 0) lastBytes = downloaded
-                    lastTs = System.currentTimeMillis()
 
                     ShsTubeApp.appScope.launch {
                         DownloadRepository.updateProgress(
@@ -165,8 +166,22 @@ class DownloadService : Service() {
                     updateNotif(notifId, title, "$pct%  •  $human", pct, true)
                 }
             }
-            // Locate the final file (most recently modified file in the dir)
-            val finalFile = outDir.listFiles()?.maxByOrNull { f -> f.lastModified() }
+
+            // Locate *our* file by the unique prefix — no more collisions with other apps.
+            val produced = outDir.listFiles { _, name ->
+                name.startsWith("${downloadTag}__") &&
+                    !name.endsWith(".part") &&
+                    !name.endsWith(".ytdl") &&
+                    !name.endsWith(".temp")
+            }?.filter { it.isFile }
+                ?.maxByOrNull { it.length() }
+
+            val finalFile = produced?.let { src ->
+                val cleanName = src.name.removePrefix("${downloadTag}__")
+                val target = File(src.parentFile, cleanName)
+                if (!target.exists() && src.renameTo(target)) target else src
+            }
+
             DownloadRepository.markCompleted(rowId, "completed", finalFile?.absolutePath)
             updateNotif(notifId, title, "✓ Download complete", 100, false)
         } catch (t: Throwable) {
@@ -175,14 +190,9 @@ class DownloadService : Service() {
             updateNotif(notifId, title, "Failed: ${t.message?.take(50)}", 0, false)
         }
 
-        // Hand the user a tap-to-open notification on completion
         delay(800)
     }
 
-    /** Parse a yt-dlp progress line like:
-     *   "[download]  35.2% of 12.34MiB at 1.23MiB/s ETA 00:08"
-     * Returns (downloadedBytes, totalBytes, speedBps).
-     */
     private fun parseLine(line: String?, fallbackDownloaded: Long, fallbackSpeed: Long): Triple<Long, Long, Long> {
         if (line.isNullOrBlank()) return Triple(fallbackDownloaded, 0L, fallbackSpeed)
         val totalMatch = Regex("""of\s+([\d.]+)([KMG]?i?B)""").find(line)

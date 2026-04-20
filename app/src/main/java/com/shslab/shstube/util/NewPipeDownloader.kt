@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Minimal OkHttp-backed Downloader implementation for NewPipeExtractor.
- * Mirrors the pattern used by the official NewPipe Android client.
  */
 class NewPipeDownloader private constructor(private val client: OkHttpClient) : Downloader() {
 
@@ -19,11 +18,18 @@ class NewPipeDownloader private constructor(private val client: OkHttpClient) : 
         val headers = request.headers()
         val dataToSend = request.dataToSend()
 
+        // OkHttp 4.x rejects method="POST"/"PUT"/"PATCH" with a null body (throws
+        // IllegalArgumentException). Some NewPipe YouTube endpoints (comments, continuations)
+        // legitimately POST with no payload — give them an empty body instead of null.
+        val body = when {
+            dataToSend != null -> dataToSend.toRequestBody(null, 0, dataToSend.size)
+            METHODS_REQUIRING_BODY.contains(httpMethod.uppercase()) ->
+                ByteArray(0).toRequestBody(null)
+            else -> null
+        }
+
         val builder = Request.Builder()
-            .method(
-                httpMethod,
-                if (dataToSend != null) dataToSend.toRequestBody(null, 0, dataToSend.size) else null
-            )
+            .method(httpMethod, body)
             .url(url)
             .addHeader("User-Agent", USER_AGENT)
 
@@ -45,6 +51,8 @@ class NewPipeDownloader private constructor(private val client: OkHttpClient) : 
         private const val USER_AGENT =
             "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) " +
             "Chrome/124.0.0.0 Mobile Safari/537.36 SHSTube/2.1"
+
+        private val METHODS_REQUIRING_BODY = setOf("POST", "PUT", "PATCH", "DELETE")
 
         fun create(): NewPipeDownloader {
             val client = OkHttpClient.Builder()

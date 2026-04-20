@@ -15,6 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.Localization
 
@@ -31,34 +35,48 @@ class ShsTubeApp : Application() {
         @Volatile var newPipeReady = false
         @Volatile var torrentReady = false
 
+        // Guards concurrent init attempts — prevents double ZIP extraction / binary corruption
+        // when the background boot-init and an on-demand awaitYtDlpReady() race against each other.
+        private val ytDlpInitMutex = Mutex()
+
+        /**
+         * Idempotent, thread-safe init path. Runs the heavy extraction strictly on Dispatchers.IO
+         * and is serialized by [ytDlpInitMutex] so the app-boot launch and any on-demand call
+         * from UI/service code cannot overlap.
+         */
+        suspend fun ensureYtDlpInitialized(): Boolean {
+            if (ytDlpReady) return true
+            return ytDlpInitMutex.withLock {
+                if (ytDlpReady) return@withLock true
+                withContext(Dispatchers.IO) {
+                    try {
+                        YoutubeDL.getInstance().init(instance)
+                        FFmpeg.getInstance().init(instance)
+                        ytDlpReady = true
+                        ytDlpInitError = null
+                        Log.i(TAG, "yt-dlp + ffmpeg initialized")
+                        true
+                    } catch (t: Throwable) {
+                        ytDlpInitError = t.message
+                        Log.w(TAG, "yt-dlp init failed", t)
+                        false
+                    }
+                }
+            }
+        }
+
         /**
          * Suspends until yt-dlp finishes its first-run binary extraction (or timeout).
          * Returns true if the engine is ready, false if init failed / timed out.
          *
-         * If init has not been kicked off yet (or previously failed) we re-attempt it here.
+         * Fatal-fix: the init call is now wrapped in Dispatchers.IO via [ensureYtDlpInitialized]
+         * and serialized by a Mutex. Callers on Dispatchers.Main (e.g. ShareSheetFragment) will
+         * no longer ANR during the ~30 MB Python/yt-dlp/ffmpeg extraction on first launch.
          */
         suspend fun awaitYtDlpReady(timeoutMs: Long = 60_000L): Boolean {
             if (ytDlpReady) return true
-            // Re-attempt init in case it failed previously
-            try {
-                YoutubeDL.getInstance().init(instance)
-                FFmpeg.getInstance().init(instance)
-                ytDlpReady = true
-                ytDlpInitError = null
-                Log.i(TAG, "yt-dlp re-init OK (suspend)")
-                return true
-            } catch (t: Throwable) {
-                ytDlpInitError = t.message
-                Log.w(TAG, "yt-dlp re-init in awaitYtDlpReady failed: ${t.message}")
-            }
-
-            // Poll up to timeout in case background init is still in flight
-            var elapsed = 0L
-            val step = 250L
-            while (elapsed < timeoutMs) {
-                if (ytDlpReady) return true
-                delay(step); elapsed += step
-            }
+            val ok = withTimeoutOrNull(timeoutMs) { ensureYtDlpInitialized() } ?: false
+            if (ok) return true
             return ytDlpReady
         }
     }
@@ -93,17 +111,12 @@ class ShsTubeApp : Application() {
         }
 
         // 3. Initialize yt-dlp (extracts Python runtime + yt-dlp + ffmpeg into app filesDir)
+        //    Uses the same mutex-guarded path as awaitYtDlpReady() so the two cannot race.
         appScope.launch {
-            try {
-                YoutubeDL.getInstance().init(this@ShsTubeApp)
-                FFmpeg.getInstance().init(this@ShsTubeApp)
-                ytDlpReady = true
-                ytDlpInitError = null
-                DevLog.info("yt-dlp", "engine + ffmpeg initialized")
-            } catch (t: Throwable) {
-                ytDlpInitError = t.message
-                DevLog.error("yt-dlp", t, extra = "init failed (will retry on demand)")
-            }
+            val ok = ensureYtDlpInitialized()
+            if (ok) DevLog.info("yt-dlp", "engine + ffmpeg initialized")
+            else DevLog.error("yt-dlp", Throwable(ytDlpInitError ?: "unknown"),
+                extra = "init failed (will retry on demand)")
         }
 
         // 4. Download EasyList for the native ad-blocker
