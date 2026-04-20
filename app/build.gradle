@@ -12,8 +12,8 @@ android {
         applicationId "com.shslab.shstube"
         minSdk 24
         targetSdk 34
-        versionCode 26
-        versionName "2.2.2-storagefix"
+        versionCode 27
+        versionName "2.2.3-storagefix"
         vectorDrawables.useSupportLibrary = true
 
         // Universal APK — ship every ABI

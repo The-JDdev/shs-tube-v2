@@ -125,7 +125,13 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 perms += Manifest.permission.POST_NOTIFICATIONS
             }
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            // Android 9 (API 28) and below → both read & write storage needed.
+            // Android 10 (API 29) → still WRITE_EXTERNAL_STORAGE needed because we ship
+            //   requestLegacyExternalStorage=true to write into /storage/emulated/0/Download/SHSTube.
+            // Android 11+ (API 30+) → no legacy permission helps; we use app-private dir
+            //   OR the user grants MANAGE_EXTERNAL_STORAGE from the settings page (handled
+            //   in StorageSetupActivity). Nothing to request here.
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
                 perms += Manifest.permission.WRITE_EXTERNAL_STORAGE
                 perms += Manifest.permission.READ_EXTERNAL_STORAGE
             }
