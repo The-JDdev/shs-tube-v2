@@ -17,6 +17,7 @@
     <string name="add">Add</string>
     <string name="download_direct">Direct download</string>
     <string name="download_ytdlp">yt-dlp</string>
+    <string name="download_picker">Pick quality</string>
     <string name="add_magnet">Add magnet</string>
     <string name="empty_downloads">No downloads yet. Browse a page with media or paste a URL above.</string>
     <string name="empty_torrents">No torrents yet. Paste a magnet link above to start.</string>

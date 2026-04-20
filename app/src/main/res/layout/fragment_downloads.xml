@@ -21,9 +21,9 @@
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="horizontal" android:paddingTop="8dp">
 
-        <Button android:id="@+id/btn_add_url"
+        <Button android:id="@+id/btn_picker"
             android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:text="@string/add"
+            android:text="@string/download_picker"
             android:backgroundTint="@color/brand_blue"
             android:textColor="@color/white" />
 

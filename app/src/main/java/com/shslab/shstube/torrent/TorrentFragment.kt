@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -23,12 +24,16 @@ class TorrentFragment : Fragment() {
         val rv = v.findViewById<RecyclerView>(R.id.rv_torrents)
         val input = v.findViewById<EditText>(R.id.input_magnet)
         val btn = v.findViewById<Button>(R.id.btn_add_magnet)
+        val btnSettings = v.findViewById<ImageButton>(R.id.btn_torrent_settings)
         val status = v.findViewById<TextView>(R.id.engine_status)
         val empty = v.findViewById<TextView>(R.id.empty_state)
 
         adapter = TorrentAdapter(TorrentEngine.rows)
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
+
+        // Apply persisted torrent settings on entry (in case engine was restarted)
+        TorrentSettingsDialog.applyOnStartup(requireContext())
 
         fun rebind() {
             empty.visibility = if (TorrentEngine.rows.isEmpty()) View.VISIBLE else View.GONE
@@ -51,6 +56,8 @@ class TorrentFragment : Fragment() {
             input.setText("")
             rebind()
         }
+
+        btnSettings.setOnClickListener { TorrentSettingsDialog.show(requireContext()) }
         return v
     }
 

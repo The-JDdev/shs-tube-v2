@@ -16,6 +16,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.shslab.shstube.MainActivity
 import com.shslab.shstube.R
 
 class BrowserFragment : Fragment() {
@@ -36,6 +37,7 @@ class BrowserFragment : Fragment() {
         urlBar        = v.findViewById(R.id.url_bar)
         downloadIcon  = v.findViewById(R.id.btn_downloads)
         downloadBadge = v.findViewById(R.id.download_badge)
+        val btnSettings = v.findViewById<ImageButton>(R.id.btn_browser_settings)
 
         val s: WebSettings = webView.settings
         s.javaScriptEnabled = true
@@ -47,7 +49,10 @@ class BrowserFragment : Fragment() {
         s.displayZoomControls = false
         s.mediaPlaybackRequiresUserGesture = false
         s.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-        s.userAgentString = s.userAgentString.replace("; wv", "") + " SHSTube/2.0"
+        s.userAgentString = s.userAgentString.replace("; wv", "") + " SHSTube/2.1"
+
+        // Apply incognito / cookie settings
+        BrowserSettings.applyToWebView(webView, requireContext())
 
         webView.addJavascriptInterface(
             MediaSniffer.JsBridge { webView.url ?: "" },
@@ -63,8 +68,11 @@ class BrowserFragment : Fragment() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView?, req: WebResourceRequest?): WebResourceResponse? {
                 val url = req?.url?.toString() ?: return null
-                // 1. Native ad-blocker
-                AdBlocker.maybeBlock(url)?.let { return it }
+                // 1. Native ad-blocker — respect per-domain whitelist
+                val pageHost = try { android.net.Uri.parse(view?.url ?: "").host ?: "" } catch (_: Throwable) { "" }
+                if (!BrowserSettings.isWhitelisted(requireContext(), pageHost)) {
+                    AdBlocker.maybeBlock(url)?.let { return it }
+                }
                 // 2. Network-level sniff (URL extension based)
                 val accept = req.requestHeaders["Accept"]
                 MediaSniffer.reportNetworkResource(url, accept, view?.url)
@@ -83,33 +91,51 @@ class BrowserFragment : Fragment() {
             loadUrl(urlBar.text.toString())
             true
         }
+        // URL bar auto-select on focus — quick edit/replace
+        urlBar.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) urlBar.post { urlBar.selectAll() }
+        }
         v.findViewById<ImageButton>(R.id.btn_go).setOnClickListener { loadUrl(urlBar.text.toString()) }
         v.findViewById<ImageButton>(R.id.btn_back).setOnClickListener { if (webView.canGoBack()) webView.goBack() }
         v.findViewById<ImageButton>(R.id.btn_forward).setOnClickListener { if (webView.canGoForward()) webView.goForward() }
         v.findViewById<ImageButton>(R.id.btn_reload).setOnClickListener { webView.reload() }
+
+        btnSettings.setOnClickListener {
+            val host = try { android.net.Uri.parse(webView.url ?: "").host } catch (_: Throwable) { null }
+            BrowserSettings.showSettingsDialog(requireContext(), host) {
+                BrowserSettings.applyToWebView(webView, requireContext())
+            }
+        }
 
         downloadIcon.setOnClickListener {
             val n = MediaSniffer.count()
             if (n == 0) {
                 Toast.makeText(requireContext(), "No media sniffed yet — open a page with videos/images", Toast.LENGTH_SHORT).show()
             } else {
-                // Show a quick chooser via a simple dialog
                 showSnifferChooser()
             }
         }
+        // Long-press the download icon to send the current page URL to the format picker
+        downloadIcon.setOnLongClickListener {
+            val pageUrl = webView.url ?: urlBar.text.toString()
+            if (pageUrl.isNotBlank()) (activity as? MainActivity)?.showFormatSheet(pageUrl, "Current page")
+            true
+        }
 
         MediaSniffer.addListener(sniffListener)
-        loadUrl("https://www.google.com")
+        loadUrl(BrowserSettings.engine(requireContext()).template.removeSuffix("?q=") + "?q=")
         return v
     }
 
     private fun loadUrl(input: String) {
         val raw = input.trim()
+        val engine = BrowserSettings.engine(requireContext())
         val url = when {
             raw.isEmpty() -> "https://www.google.com"
             raw.startsWith("http://") || raw.startsWith("https://") -> raw
+            raw.startsWith("magnet:") -> raw
             raw.contains(".") && !raw.contains(" ") -> "https://$raw"
-            else -> "https://www.google.com/search?q=" + android.net.Uri.encode(raw)
+            else -> engine.template + android.net.Uri.encode(raw)
         }
         webView.loadUrl(url)
     }

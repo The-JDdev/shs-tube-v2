@@ -1,6 +1,7 @@
 package com.shslab.shstube
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -13,7 +14,9 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.shslab.shstube.about.AboutFragment
 import com.shslab.shstube.browser.BrowserFragment
 import com.shslab.shstube.downloads.DownloadsFragment
+import com.shslab.shstube.downloads.FormatSheet
 import com.shslab.shstube.search.SearchFragment
+import com.shslab.shstube.torrent.TorrentEngine
 import com.shslab.shstube.torrent.TorrentFragment
 
 class MainActivity : AppCompatActivity() {
@@ -65,6 +68,9 @@ class MainActivity : AppCompatActivity() {
 
         requestRuntimePermissions()
 
+        // Handle the launch intent (share / view / magnet)
+        handleIncoming(intent)
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val curr = supportFragmentManager.findFragmentById(R.id.fragment_container)
@@ -73,6 +79,51 @@ class MainActivity : AppCompatActivity() {
                 onBackPressedDispatcher.onBackPressed()
             }
         })
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncoming(intent)
+    }
+
+    /** Captures URLs from the system Share Sheet, Browser → "Open in", and magnet links. */
+    private fun handleIncoming(intent: Intent?) {
+        try {
+            if (intent == null) return
+            val raw: String? = when (intent.action) {
+                Intent.ACTION_SEND -> intent.getStringExtra(Intent.EXTRA_TEXT)
+                Intent.ACTION_VIEW -> intent.dataString
+                else -> null
+            } ?: return
+
+            val text = raw ?: return
+            // Pull the first URL out of the text (share text often has extra description).
+            val url = Regex("""(?:https?://|magnet:\?)\S+""").find(text)?.value ?: return
+
+            when {
+                url.startsWith("magnet:") -> {
+                    val res = TorrentEngine.addMagnet(url)
+                    Toast.makeText(this, res, Toast.LENGTH_SHORT).show()
+                    bottomNav.selectedItemId = R.id.tab_torrents
+                }
+                else -> {
+                    Toast.makeText(this, "Got URL — opening quality picker…", Toast.LENGTH_SHORT).show()
+                    showFormatSheet(url, "Shared link")
+                }
+            }
+        } catch (t: Throwable) {
+            Log.e(ShsTubeApp.TAG, "handleIncoming", t)
+        }
+    }
+
+    fun showFormatSheet(url: String, title: String = "") {
+        try {
+            FormatSheet.newInstance(url, title).show(supportFragmentManager, "format_sheet")
+        } catch (t: Throwable) {
+            Log.e(ShsTubeApp.TAG, "FormatSheet show failed", t)
+            Toast.makeText(this, "Could not open quality picker", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun requestRuntimePermissions() {
