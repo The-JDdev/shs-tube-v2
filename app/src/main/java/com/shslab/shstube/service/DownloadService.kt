@@ -16,6 +16,7 @@ import com.shslab.shstube.ShsTubeApp
 import com.shslab.shstube.data.DownloadEntity
 import com.shslab.shstube.data.DownloadRepository
 import com.shslab.shstube.data.StoragePrefs
+import com.shslab.shstube.util.DevLog
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
@@ -169,7 +170,7 @@ class DownloadService : Service() {
             DownloadRepository.markCompleted(rowId, "completed", finalFile?.absolutePath)
             updateNotif(notifId, title, "✓ Download complete", 100, false)
         } catch (t: Throwable) {
-            Log.e(ShsTubeApp.TAG, "[DownloadService] failed: ${t.message}", t)
+            DevLog.error("yt-dlp", t, extra = "download failed url=$url fmt=$formatId audio=$audioOnly")
             DownloadRepository.markFailed(rowId, t.message?.take(200) ?: t.javaClass.simpleName)
             updateNotif(notifId, title, "Failed: ${t.message?.take(50)}", 0, false)
         }

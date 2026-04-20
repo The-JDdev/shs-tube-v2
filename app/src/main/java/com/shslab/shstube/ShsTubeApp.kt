@@ -6,6 +6,7 @@ import com.shslab.shstube.browser.AdBlocker
 import com.shslab.shstube.data.DownloadRepository
 import com.shslab.shstube.torrent.TorrentEngine
 import com.shslab.shstube.util.CrashHandler
+import com.shslab.shstube.util.DevLog
 import com.shslab.shstube.util.NewPipeDownloader
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.ffmpeg.FFmpeg
@@ -70,12 +71,15 @@ class ShsTubeApp : Application() {
         try { CrashHandler.install(this) }
         catch (t: Throwable) { Log.e(TAG, "CrashHandler install failed", t) }
 
+        // 0.5 Boot the in-app developer log so every later catch can record stack traces
+        try { DevLog.bootBanner() } catch (_: Throwable) {}
+
         // 1. Room database — initialise the repository singleton
         try {
             DownloadRepository.init(this)
-            Log.i(TAG, "Room database ready")
+            DevLog.info("room", "database ready")
         } catch (t: Throwable) {
-            Log.e(TAG, "Room init failed", t)
+            DevLog.error("room", t, extra = "Room init failed")
         }
 
         // 2. NewPipe Extractor (cheap — sync init is fine)
@@ -83,9 +87,9 @@ class ShsTubeApp : Application() {
         try {
             NewPipe.init(NewPipeDownloader.create(), Localization("en", "US"))
             newPipeReady = true
-            Log.i(TAG, "NewPipe extractor ready")
+            DevLog.info("newpipe", "extractor ready")
         } catch (t: Throwable) {
-            Log.e(TAG, "NewPipe init failed", t)
+            DevLog.error("newpipe", t, extra = "NewPipe init failed")
         }
 
         // 3. Initialize yt-dlp (extracts Python runtime + yt-dlp + ffmpeg into app filesDir)
@@ -95,17 +99,17 @@ class ShsTubeApp : Application() {
                 FFmpeg.getInstance().init(this@ShsTubeApp)
                 ytDlpReady = true
                 ytDlpInitError = null
-                Log.i(TAG, "yt-dlp + ffmpeg initialized")
+                DevLog.info("yt-dlp", "engine + ffmpeg initialized")
             } catch (t: Throwable) {
                 ytDlpInitError = t.message
-                Log.e(TAG, "yt-dlp init failed (will retry on demand)", t)
+                DevLog.error("yt-dlp", t, extra = "init failed (will retry on demand)")
             }
         }
 
         // 4. Download EasyList for the native ad-blocker
         appScope.launch {
             try { AdBlocker.ensureRulesLoaded(this@ShsTubeApp) }
-            catch (t: Throwable) { Log.e(TAG, "AdBlocker load failed", t) }
+            catch (t: Throwable) { DevLog.error("adblock", t, extra = "EasyList load failed") }
         }
 
         // 5. Boot the torrent engine (libtorrent4j session)
@@ -113,7 +117,11 @@ class ShsTubeApp : Application() {
             try {
                 TorrentEngine.start(this@ShsTubeApp)
                 torrentReady = TorrentEngine.nativeReady
-            } catch (t: Throwable) { Log.e(TAG, "Torrent engine boot failed", t) }
+                if (torrentReady) DevLog.info("torrent", "libtorrent4j session started")
+                else DevLog.warn("torrent", "native engine unavailable: ${TorrentEngine.nativeError}")
+            } catch (t: Throwable) {
+                DevLog.error("torrent", t, extra = "engine boot failed")
+            }
         }
     }
 }

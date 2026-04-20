@@ -178,7 +178,7 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
             val v = videos.distinctBy { q -> q.label }.take(10)
             Triple(title, a, v)
         } catch (t: Throwable) {
-            android.util.Log.e(ShsTubeApp.TAG, "fetchFormats failed: ${t.message}", t)
+            com.shslab.shstube.util.DevLog.error("yt-dlp", t, extra = "share-sheet fetchFormats failed url=$targetUrl")
             Triple("", emptyList(), emptyList())
         }
     }

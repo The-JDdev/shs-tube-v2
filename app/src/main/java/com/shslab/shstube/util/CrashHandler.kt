@@ -87,6 +87,8 @@ object CrashHandler {
             val f = File(ctx.filesDir, LOG_FILE)
             f.appendText(text)
         } catch (_: Throwable) {}
+        // Mirror to in-app DevLog so the user can read crash traces from inside the app
+        try { com.shslab.shstube.util.DevLog.error("crash", ex, extra = "thread=${thread.name}") } catch (_: Throwable) {}
     }
 
     private fun showToast(ctx: Context, ex: Throwable) {

@@ -96,6 +96,7 @@ class FormatSheet : BottomSheetDialogFragment() {
                 if (safeTitle.isNotBlank()) tvTitle.text = safeTitle
             } catch (t: Throwable) {
                 pb.visibility = View.GONE
+                com.shslab.shstube.util.DevLog.error("yt-dlp", t, extra = "FormatSheet getInfo failed url=$url")
                 Toast.makeText(
                     requireContext(),
                     "Format fetch failed: ${t.javaClass.simpleName}. Use 'Best' to download.",

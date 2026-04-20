@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import com.shslab.shstube.ShsTubeApp
+import com.shslab.shstube.util.DevLog
 import org.libtorrent4j.AlertListener
 import org.libtorrent4j.SessionManager
 import org.libtorrent4j.TorrentHandle
@@ -115,7 +116,7 @@ object TorrentEngine {
         } catch (t: Throwable) {
             nativeReady = false
             nativeError = t.javaClass.simpleName + ": " + (t.message ?: "")
-            Log.e(ShsTubeApp.TAG, "[Torrent] native engine unavailable: ${t.message}")
+            DevLog.error("torrent", t, extra = "native engine unavailable")
         }
     }
 
@@ -138,7 +139,7 @@ object TorrentEngine {
             if (bytes.isEmpty()) return null
             parseTorrentBytes(bytes)
         } catch (t: Throwable) {
-            Log.e(ShsTubeApp.TAG, "[Torrent] fetchMagnetMetadata failed: ${t.message}")
+            DevLog.error("torrent", t, extra = "fetchMagnetMetadata failed (magnet=${magnet.take(60)})")
             null
         }
     }
@@ -149,7 +150,7 @@ object TorrentEngine {
         return try {
             parseTorrentBytes(bytes)
         } catch (t: Throwable) {
-            Log.e(ShsTubeApp.TAG, "[Torrent] addTorrentBytes parse failed: ${t.message}")
+            DevLog.error("torrent", t, extra = "addTorrentBytes parse failed")
             null
         }
     }
@@ -252,7 +253,7 @@ object TorrentEngine {
             notifyChanged()
             "OK: started — ${selectedIndices.size}/${parsed.files.size} files selected"
         } catch (t: Throwable) {
-            Log.e(ShsTubeApp.TAG, "[Torrent] startWithSelection: ${t.message}", t)
+            DevLog.error("torrent", t, extra = "startWithSelection failed (name=${parsed.name})")
             "ERROR: ${t.javaClass.simpleName}: ${t.message?.take(80)}"
         }
     }
@@ -274,6 +275,7 @@ object TorrentEngine {
             notifyChanged()
             "OK: added (info-hash $ih)"
         } catch (t: Throwable) {
+            DevLog.error("torrent", t, extra = "addMagnet failed (magnet=${magnet.take(60)})")
             "ERROR: ${t.javaClass.simpleName}: ${t.message?.take(80)}"
         }
     }

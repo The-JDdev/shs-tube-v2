@@ -115,5 +115,12 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <!-- In-app Developer Logs viewer — full runtime stack traces, no PC required -->
+        <activity
+            android:name=".devlog.DevLogActivity"
+            android:exported="false"
+            android:label="Developer Logs"
+            android:theme="@style/Theme.ShsTube" />
+
     </application>
 </manifest>

@@ -200,6 +200,34 @@
         <View android:layout_width="match_parent" android:layout_height="1dp"
             android:background="@color/divider" android:layout_marginVertical="22dp" />
 
+        <!-- DEVELOPER LOGS — captures every runtime exception in-app -->
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="DIAGNOSTICS"
+            android:textColor="@color/text_secondary" android:textSize="12sp"
+            android:textStyle="bold" android:letterSpacing="0.15"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="See every runtime exception from yt-dlp, NewPipe, libtorrent, WebView, share &amp; format sheets — with full stack traces — directly inside the app. No PC required."
+            android:textColor="@color/text_muted" android:textSize="11sp"
+            android:gravity="center"
+            android:layout_marginBottom="10dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_dev_log"
+            style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open Developer Logs"
+            android:textAllCaps="false"
+            android:textColor="@color/brand_accent"
+            app:strokeColor="@color/brand_accent" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/divider" android:layout_marginVertical="22dp" />
+
         <TextView
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="SHS Tube  v2.2.0-snaptube"

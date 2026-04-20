@@ -64,6 +64,14 @@ class AboutFragment : Fragment() {
             }
         }
 
+        v.findViewById<MaterialButton>(R.id.btn_dev_log).setOnClickListener {
+            try {
+                startActivity(Intent(requireContext(), com.shslab.shstube.devlog.DevLogActivity::class.java))
+            } catch (t: Throwable) {
+                Toast.makeText(requireContext(), "Cannot open log viewer: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         return v
     }
 

@@ -63,7 +63,7 @@ class ShareCatcherActivity : FragmentActivity() {
             val sheet = ShareSheetFragment.newInstance(url)
             sheet.show(supportFragmentManager, "share_sheet")
         } catch (t: Throwable) {
-            Log.e(ShsTubeApp.TAG, "ShareCatcher show failed", t)
+            com.shslab.shstube.util.DevLog.error("share", t, extra = "ShareCatcher show failed url=$url")
             Toast.makeText(this, "Share failed: ${t.message?.take(60)}", Toast.LENGTH_SHORT).show()
             finish()
         }
@@ -109,7 +109,7 @@ class ShareCatcherActivity : FragmentActivity() {
             val bytes = conn.getInputStream().use { input -> input.readBytes() }
             TorrentEngine.addTorrentBytes(bytes)
         } catch (t: Throwable) {
-            Log.e(ShsTubeApp.TAG, "fetchTorrentBytes failed: ${t.message}")
+            com.shslab.shstube.util.DevLog.error("torrent", t, extra = "fetchTorrentBytes failed url=$url")
             null
         }
     }
