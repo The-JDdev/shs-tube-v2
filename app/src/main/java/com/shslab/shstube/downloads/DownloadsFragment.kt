@@ -119,16 +119,18 @@ private class DownloadsAdapter(val data: MutableList<DownloadItem>) :
         VH(LayoutInflater.from(p.context).inflate(R.layout.item_download, p, false))
     override fun getItemCount() = data.size
     override fun onBindViewHolder(h: VH, pos: Int) {
-        val it = data[pos]
-        h.title.text = it.title.ifBlank { it.url.substringAfterLast('/').take(60) }
-        h.sub.text   = "${it.source} • ${it.mime}"
-        h.status.text = it.status
-        h.play.visibility = if (it.localPath != null && it.localPath!!.isNotBlank()) View.VISIBLE else View.GONE
+        val item = data[pos]
+        h.title.text = item.title.ifBlank { item.url.substringAfterLast('/').take(60) }
+        h.sub.text   = "${item.source} • ${item.mime}"
+        h.status.text = item.status
+        val lp = item.localPath
+        h.play.visibility = if (!lp.isNullOrBlank()) View.VISIBLE else View.GONE
         h.play.setOnClickListener {
             val ctx = h.itemView.context
+            val path = item.localPath ?: return@setOnClickListener
             val intent = android.content.Intent(ctx, com.shslab.shstube.player.PlayerActivity::class.java).apply {
-                putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_URL, "file://" + it.localPath)
-                putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_TITLE, it.title)
+                putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_URL, "file://$path")
+                putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_TITLE, item.title)
             }
             ctx.startActivity(intent)
         }

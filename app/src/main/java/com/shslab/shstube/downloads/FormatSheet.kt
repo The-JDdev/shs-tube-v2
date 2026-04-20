@@ -108,27 +108,28 @@ class FormatSheet : BottomSheetDialogFragment() {
         return v
     }
 
-    private fun toRow(f: VideoFormat): FormatRow? = try {
-        val id = f.formatId ?: return null
-        val ext = f.ext ?: ""
-        val vcodec = f.vcodec ?: ""
-        val acodec = f.acodec ?: ""
-        val res = f.resolution ?: when {
-            f.height > 0 -> "${f.height}p"
-            else -> ""
+    private fun toRow(f: VideoFormat): FormatRow? {
+        return try {
+            val id = f.formatId ?: return null
+            val ext = f.ext ?: ""
+            val vcodec = f.vcodec ?: ""
+            val acodec = f.acodec ?: ""
+            val res = if (f.height > 0) "${f.height}p" else ""
+            val sizeMb = if (f.fileSize > 0) " • ${f.fileSize / (1024 * 1024)} MB" else ""
+            val tag = when {
+                vcodec != "none" && vcodec.isNotBlank() && acodec != "none" && acodec.isNotBlank() -> "🎞 video+audio"
+                vcodec != "none" && vcodec.isNotBlank() -> "🎬 video only"
+                acodec != "none" && acodec.isNotBlank() -> "🎧 audio only"
+                else -> "?"
+            }
+            val label = "$tag • $res • $ext$sizeMb"
+            // Score for sort: video resolution beats audio. Bigger = higher.
+            val score = (if (f.height > 0) f.height else 0) * 1000 + (f.fileSize / (1024L * 1024L)).toInt()
+            FormatRow(id, label, score)
+        } catch (_: Throwable) {
+            null
         }
-        val sizeMb = if (f.fileSize > 0) " • ${f.fileSize / (1024 * 1024)} MB" else ""
-        val tag = when {
-            vcodec != "none" && vcodec.isNotBlank() && acodec != "none" && acodec.isNotBlank() -> "🎞 video+audio"
-            vcodec != "none" && vcodec.isNotBlank() -> "🎬 video only"
-            acodec != "none" && acodec.isNotBlank() -> "🎧 audio only"
-            else -> "?"
-        }
-        val label = "$tag • $res • $ext$sizeMb"
-        // Score for sort: video resolution beats audio. Bigger = higher.
-        val score = (f.height.takeIf { it > 0 } ?: 0) * 1000 + (f.fileSize / (1024L * 1024L)).toInt()
-        FormatRow(id, label, score)
-    } catch (_: Throwable) { null }
+    }
 
     private fun startDownload(formatSpec: String, label: String) {
         val item = DownloadItem(
