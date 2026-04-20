@@ -1,13 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ShsTube" parent="Theme.MaterialComponents.NoActionBar">
+    <!-- Material Design 3 base theme — uses material:1.11.0 M3 styles -->
+    <style name="Theme.ShsTube" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/brand_orange</item>
-        <item name="colorPrimaryDark">@color/brand_orange_dark</item>
-        <item name="colorAccent">@color/brand_accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/brand_orange_dark</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <item name="colorSecondary">@color/brand_accent</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorTertiary">@color/brand_blue</item>
+        <item name="colorOnTertiary">@color/white</item>
+        <item name="colorSurface">@color/bg_surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/bg_elevated</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/divider</item>
+        <item name="colorError">@color/error</item>
+        <item name="android:colorBackground">@color/bg_primary</item>
         <item name="android:statusBarColor">@color/bg_primary</item>
         <item name="android:navigationBarColor">@color/bg_primary</item>
         <item name="android:windowBackground">@color/bg_primary</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.ShsTube.BottomSheet</item>
+    </style>
+
+    <!-- Translucent theme for the Snaptube-style ShareCatcherActivity -->
+    <style name="Theme.ShsTube.Translucent" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.ShsTube.BottomSheet</item>
+    </style>
+
+    <style name="ThemeOverlay.ShsTube.BottomSheet" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.ShsTube.BottomSheet</item>
+    </style>
+
+    <style name="Widget.ShsTube.BottomSheet" parent="Widget.Material3.BottomSheet">
+        <item name="backgroundTint">@color/bg_surface</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.ShsTube.LargeComponent</item>
+    </style>
+
+    <style name="ShapeAppearance.ShsTube.LargeComponent" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">22dp</item>
+        <item name="cornerSizeTopRight">22dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
     </style>
 </resources>

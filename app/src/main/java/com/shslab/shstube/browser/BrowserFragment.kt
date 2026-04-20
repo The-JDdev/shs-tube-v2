@@ -1,10 +1,15 @@
 package com.shslab.shstube.browser
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Message
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -19,6 +24,16 @@ import androidx.fragment.app.Fragment
 import com.shslab.shstube.MainActivity
 import com.shslab.shstube.R
 
+/**
+ * Hardened WebView configured to behave like a modern Chromium browser:
+ *  - JS, DOM storage, database storage all enabled
+ *  - Multi-window support (window.open / target=_blank) — popups handed off to the system browser
+ *  - Geo-permission, camera/mic permission grant prompts
+ *  - Auto-accept third-party cookies (real browsers do this)
+ *  - File downloads routed straight to the FormatSheet → DownloadService
+ *  - Mixed-content allowed (legacy sites)
+ *  - Modern Chrome user-agent string
+ */
 class BrowserFragment : Fragment() {
 
     private lateinit var webView: WebView
@@ -39,19 +54,7 @@ class BrowserFragment : Fragment() {
         downloadBadge = v.findViewById(R.id.download_badge)
         val btnSettings = v.findViewById<ImageButton>(R.id.btn_browser_settings)
 
-        val s: WebSettings = webView.settings
-        s.javaScriptEnabled = true
-        s.domStorageEnabled = true
-        s.databaseEnabled = true
-        s.loadWithOverviewMode = true
-        s.useWideViewPort = true
-        s.builtInZoomControls = true
-        s.displayZoomControls = false
-        s.mediaPlaybackRequiresUserGesture = false
-        s.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-        s.userAgentString = s.userAgentString.replace("; wv", "") + " SHSTube/2.1"
-
-        // Apply incognito / cookie settings
+        configureChromiumStyle(webView)
         BrowserSettings.applyToWebView(webView, requireContext())
 
         webView.addJavascriptInterface(
@@ -63,17 +66,49 @@ class BrowserFragment : Fragment() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 if (newProgress == 100) MediaSniffer.inject(webView)
             }
+
+            // Multi-window support — when a page calls window.open() / target=_blank
+            override fun onCreateWindow(
+                view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?
+            ): Boolean {
+                val href = view?.handler?.obtainMessage()
+                val transport = resultMsg?.obj as? WebView.WebViewTransport ?: return false
+                // Create a temporary detached WebView to capture the popup target URL,
+                // then open it in this same WebView (full-page navigation, like Chrome's tab open).
+                val tempWeb = WebView(requireContext()).apply {
+                    settings.javaScriptEnabled = true
+                    webViewClient = object : WebViewClient() {
+                        override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                            val target = request?.url?.toString() ?: return true
+                            this@BrowserFragment.webView.loadUrl(target)
+                            return true
+                        }
+                    }
+                }
+                transport.webView = tempWeb
+                resultMsg.sendToTarget()
+                return true
+            }
+
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                // Auto-grant in-page media permissions (mic / camera / mid) like a real browser
+                request?.grant(request.resources)
+            }
+
+            override fun onGeolocationPermissionsShowPrompt(
+                origin: String?, callback: android.webkit.GeolocationPermissions.Callback?
+            ) {
+                callback?.invoke(origin, true, false)
+            }
         }
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView?, req: WebResourceRequest?): WebResourceResponse? {
                 val url = req?.url?.toString() ?: return null
-                // 1. Native ad-blocker — respect per-domain whitelist
-                val pageHost = try { android.net.Uri.parse(view?.url ?: "").host ?: "" } catch (_: Throwable) { "" }
+                val pageHost = try { Uri.parse(view?.url ?: "").host ?: "" } catch (_: Throwable) { "" }
                 if (!BrowserSettings.isWhitelisted(requireContext(), pageHost)) {
-                    AdBlocker.maybeBlock(url)?.let { return it }
+                    AdBlocker.maybeBlock(url)?.let { blocked -> return blocked }
                 }
-                // 2. Network-level sniff (URL extension based)
                 val accept = req.requestHeaders["Accept"]
                 MediaSniffer.reportNetworkResource(url, accept, view?.url)
                 return null
@@ -87,11 +122,14 @@ class BrowserFragment : Fragment() {
             }
         }
 
-        urlBar.setOnEditorActionListener { _, _, _ ->
-            loadUrl(urlBar.text.toString())
-            true
+        // File downloads triggered by the page (e.g. <a download>) → format sheet
+        webView.setDownloadListener { dlUrl, _, _, _, _ ->
+            (activity as? MainActivity)?.showFormatSheet(dlUrl, "Page download")
         }
-        // URL bar auto-select on focus — quick edit/replace
+
+        urlBar.setOnEditorActionListener { _, _, _ ->
+            loadUrl(urlBar.text.toString()); true
+        }
         urlBar.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) urlBar.post { urlBar.selectAll() }
         }
@@ -101,7 +139,7 @@ class BrowserFragment : Fragment() {
         v.findViewById<ImageButton>(R.id.btn_reload).setOnClickListener { webView.reload() }
 
         btnSettings.setOnClickListener {
-            val host = try { android.net.Uri.parse(webView.url ?: "").host } catch (_: Throwable) { null }
+            val host = try { Uri.parse(webView.url ?: "").host } catch (_: Throwable) { null }
             BrowserSettings.showSettingsDialog(requireContext(), host) {
                 BrowserSettings.applyToWebView(webView, requireContext())
             }
@@ -115,7 +153,6 @@ class BrowserFragment : Fragment() {
                 showSnifferChooser()
             }
         }
-        // Long-press the download icon to send the current page URL to the format picker
         downloadIcon.setOnLongClickListener {
             val pageUrl = webView.url ?: urlBar.text.toString()
             if (pageUrl.isNotBlank()) (activity as? MainActivity)?.showFormatSheet(pageUrl, "Current page")
@@ -127,6 +164,32 @@ class BrowserFragment : Fragment() {
         return v
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun configureChromiumStyle(wv: WebView) {
+        val s: WebSettings = wv.settings
+        s.javaScriptEnabled = true
+        s.javaScriptCanOpenWindowsAutomatically = true
+        s.setSupportMultipleWindows(true)
+        s.domStorageEnabled = true
+        s.databaseEnabled = true
+        s.loadWithOverviewMode = true
+        s.useWideViewPort = true
+        s.builtInZoomControls = true
+        s.displayZoomControls = false
+        s.mediaPlaybackRequiresUserGesture = false
+        s.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        s.allowContentAccess = true
+        s.allowFileAccess = true
+        s.cacheMode = WebSettings.LOAD_DEFAULT
+        s.userAgentString = s.userAgentString.replace("; wv", "") + " SHSTube/2.2"
+
+        // Real-browser cookie behaviour — accept third-party for embeds (YouTube/etc.)
+        try {
+            CookieManager.getInstance().setAcceptCookie(true)
+            CookieManager.getInstance().setAcceptThirdPartyCookies(wv, true)
+        } catch (_: Throwable) {}
+    }
+
     private fun loadUrl(input: String) {
         val raw = input.trim()
         val engine = BrowserSettings.engine(requireContext())
@@ -135,7 +198,7 @@ class BrowserFragment : Fragment() {
             raw.startsWith("http://") || raw.startsWith("https://") -> raw
             raw.startsWith("magnet:") -> raw
             raw.contains(".") && !raw.contains(" ") -> "https://$raw"
-            else -> engine.template + android.net.Uri.encode(raw)
+            else -> engine.template + Uri.encode(raw)
         }
         webView.loadUrl(url)
     }

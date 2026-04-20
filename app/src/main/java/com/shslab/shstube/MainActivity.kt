@@ -13,11 +13,12 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.shslab.shstube.about.AboutFragment
 import com.shslab.shstube.browser.BrowserFragment
+import com.shslab.shstube.data.StoragePrefs
 import com.shslab.shstube.downloads.DownloadsFragment
 import com.shslab.shstube.downloads.FormatSheet
 import com.shslab.shstube.downloads.SmartDownloadRouter
 import com.shslab.shstube.search.SearchFragment
-import com.shslab.shstube.torrent.TorrentEngine
+import com.shslab.shstube.setup.StorageSetupActivity
 import com.shslab.shstube.torrent.TorrentFragment
 
 class MainActivity : AppCompatActivity() {
@@ -27,6 +28,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // First-run: route to storage chooser before showing the main UI
+        if (!StoragePrefs.isFirstRunDone(this) && intent?.action == Intent.ACTION_MAIN) {
+            startActivity(Intent(this, StorageSetupActivity::class.java))
+            finish(); return
+        }
+
         try {
             setContentView(R.layout.activity_main)
         } catch (t: Throwable) {
@@ -38,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val frag: Fragment = try {
                 when (item.itemId) {
-                    R.id.tab_browser   -> BrowserFragment().also { browserFrag = it }
+                    R.id.tab_browser   -> BrowserFragment().also { f -> browserFrag = f }
                     R.id.tab_search    -> SearchFragment()
                     R.id.tab_downloads -> DownloadsFragment()
                     R.id.tab_torrents  -> TorrentFragment()
@@ -63,13 +71,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (savedInstanceState == null) {
-            // Default to the SEARCH tab — never crashes (no WebView dependency).
             bottomNav.selectedItemId = R.id.tab_search
         }
 
         requestRuntimePermissions()
-
-        // Handle the launch intent (share / view / magnet)
         handleIncoming(intent)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -88,21 +93,14 @@ class MainActivity : AppCompatActivity() {
         handleIncoming(intent)
     }
 
-    /** Captures URLs from the system Share Sheet, Browser → "Open in", and magnet links. */
+    /** ACTION_VIEW (deep links / magnets). ACTION_SEND is now handled by ShareCatcherActivity. */
     private fun handleIncoming(intent: Intent?) {
         try {
             if (intent == null) return
-            val raw: String? = when (intent.action) {
-                Intent.ACTION_SEND -> intent.getStringExtra(Intent.EXTRA_TEXT)
-                Intent.ACTION_VIEW -> intent.dataString
-                else -> null
-            } ?: return
+            if (intent.action != Intent.ACTION_VIEW) return
+            val raw = intent.dataString ?: return
+            val url = Regex("""(?:https?://|magnet:\?)\S+""").find(raw)?.value ?: return
 
-            val text = raw ?: return
-            // Pull the first URL out of the text (share text often has extra description).
-            val url = Regex("""(?:https?://|magnet:\?)\S+""").find(text)?.value ?: return
-
-            // SmartRouter handles magnet:, .torrent URLs (with file selector), and HTTP media URLs.
             if (url.startsWith("magnet:") || url.endsWith(".torrent", ignoreCase = true)) {
                 bottomNav.selectedItemId = R.id.tab_torrents
             }

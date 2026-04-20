@@ -40,23 +40,24 @@
         android:theme="@style/Theme.ShsTube"
         tools:targetApi="33">
 
+        <!-- LAUNCHER — first-run storage chooser routes to MainActivity afterwards -->
+        <activity
+            android:name=".setup.StorageSetupActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ShsTube"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- SHARE SHEET: text/plain (URLs from YouTube, Chrome, FB, IG, TikTok, etc.) -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-            </intent-filter>
 
             <!-- VIEW: open YouTube / common video links from any app -->
             <intent-filter android:autoVerify="false">
@@ -77,12 +78,27 @@
                 <data android:scheme="https" android:host="x.com" />
             </intent-filter>
 
-            <!-- VIEW: magnet links go straight to torrent engine -->
+            <!-- VIEW: magnet links -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="magnet" />
+            </intent-filter>
+        </activity>
+
+        <!-- TRANSPARENT SHARE CATCHER — Snaptube-style overlay sheet -->
+        <activity
+            android:name=".share.ShareCatcherActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ShsTube.Translucent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 
@@ -92,6 +108,12 @@
             android:exported="false"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <!-- Foreground download service — runs even after the share-catcher closes -->
+        <service
+            android:name=".service.DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
     </application>
 </manifest>

@@ -1,30 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_primary">
+    android:background="@color/bg_primary"
+    android:fillViewport="true">
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="20dp"
+        android:padding="22dp"
         android:gravity="center_horizontal">
 
-        <ImageView
-            android:layout_width="160dp" android:layout_height="160dp"
-            android:src="@drawable/dev_shobuj"
-            android:scaleType="centerCrop"
-            android:background="@drawable/circle_bg"
-            android:clipToOutline="true"
-            android:contentDescription="developer photo"
-            android:layout_marginTop="12dp" />
+        <!-- DEVELOPER AVATAR with glowing gradient ring -->
+        <FrameLayout
+            android:layout_width="184dp"
+            android:layout_height="184dp"
+            android:layout_marginTop="14dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/dev_avatar_ring" />
+
+            <View
+                android:layout_width="168dp"
+                android:layout_height="168dp"
+                android:layout_gravity="center"
+                android:background="@drawable/dev_avatar_inner" />
+
+            <ImageView
+                android:layout_width="156dp"
+                android:layout_height="156dp"
+                android:layout_gravity="center"
+                android:src="@drawable/dev_shobuj"
+                android:scaleType="centerCrop"
+                android:background="@drawable/circle_bg"
+                android:clipToOutline="true"
+                android:contentDescription="developer photo" />
+        </FrameLayout>
 
         <TextView android:id="@+id/dev_name"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textSize="24sp" android:textStyle="bold"
+            android:textSize="26sp" android:textStyle="bold"
             android:textColor="@color/text_primary"
-            android:layout_marginTop="14dp" />
+            android:layout_marginTop="20dp" />
 
         <TextView
             android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -34,70 +55,161 @@
             android:layout_marginTop="4dp" />
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="@color/divider" android:layout_marginVertical="20dp" />
+            android:background="@color/divider" android:layout_marginVertical="22dp" />
+
+        <!-- Connect with developer — Material 3 icon buttons in a single row -->
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="CONNECT WITH JD"
+            android:textColor="@color/text_secondary" android:textSize="12sp"
+            android:textStyle="bold" android:letterSpacing="0.15"
+            android:layout_marginBottom="14dp" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_facebook"
+                style="@style/Widget.Material3.Button.IconButton.Filled"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="10dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:contentDescription="Facebook"
+                app:icon="@drawable/ic_facebook"
+                app:iconSize="28dp"
+                app:iconTint="@color/white"
+                app:backgroundTint="@color/fb_blue"
+                app:cornerRadius="32dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_telegram"
+                style="@style/Widget.Material3.Button.IconButton.Filled"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="10dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:contentDescription="Telegram"
+                app:icon="@drawable/ic_telegram"
+                app:iconSize="28dp"
+                app:iconTint="@color/white"
+                app:backgroundTint="@color/tg_blue"
+                app:cornerRadius="32dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_email"
+                style="@style/Widget.Material3.Button.IconButton.Filled"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginHorizontal="10dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:contentDescription="Email"
+                app:icon="@drawable/ic_email"
+                app:iconSize="28dp"
+                app:iconTint="@color/white"
+                app:backgroundTint="@color/email_red"
+                app:cornerRadius="32dp" />
+        </LinearLayout>
 
         <TextView android:id="@+id/dev_email"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="@color/text_secondary" android:textSize="14sp"
+            android:textColor="@color/text_secondary" android:textSize="13sp"
+            android:layout_marginTop="14dp" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/divider" android:layout_marginVertical="22dp" />
+
+        <!-- bKash support card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/bg_surface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/brand_accent"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:gravity="center_horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="❤  Support the developer  ❤"
+                    android:textColor="@color/text_primary" android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView android:id="@+id/bkash_number"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textColor="@color/brand_accent" android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:fontFamily="monospace"
+                    android:layout_marginTop="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_copy_bkash"
+                    style="@style/Widget.Material3.Button.TonalButton.Icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Copy bKash number"
+                    android:textAllCaps="false"
+                    android:layout_marginTop="10dp"
+                    app:icon="@drawable/ic_copy"
+                    app:iconTint="@color/text_primary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/divider" android:layout_marginVertical="22dp" />
+
+        <!-- Storage location settings -->
+        <TextView
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="STORAGE"
+            android:textColor="@color/text_secondary" android:textSize="12sp"
+            android:textStyle="bold" android:letterSpacing="0.15"
             android:layout_marginBottom="8dp" />
 
-        <TextView android:id="@+id/bkash_number"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="@color/brand_accent" android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <Button android:id="@+id/btn_copy_bkash"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Copy bKash number"
-            android:backgroundTint="@color/brand_orange"
-            android:textColor="@color/white"
-            android:layout_marginTop="8dp" />
-
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="@color/divider" android:layout_marginVertical="20dp" />
-
-        <TextView
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Get in touch"
-            android:textColor="@color/text_primary" android:textSize="16sp"
-            android:textStyle="bold" android:layout_marginBottom="10dp" />
-
-        <Button android:id="@+id/btn_email"
+        <TextView android:id="@+id/storage_path"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="📧  Email — jdvijay878@gmail.com"
-            android:backgroundTint="@color/bg_elevated"
+            android:textColor="@color/text_secondary" android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginBottom="10dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_change_folder"
+            style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Change download folder…"
+            android:textAllCaps="false"
             android:textColor="@color/text_primary"
-            android:textAllCaps="false"
-            android:layout_marginVertical="4dp" />
-
-        <Button android:id="@+id/btn_facebook"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="📘  Facebook — @itsshsshobuj"
-            android:backgroundTint="@color/brand_blue"
-            android:textColor="@color/white"
-            android:textAllCaps="false"
-            android:layout_marginVertical="4dp" />
-
-        <Button android:id="@+id/btn_telegram"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="✈  Telegram — @aamoviesofficial"
-            android:backgroundTint="#0088CC"
-            android:textColor="@color/white"
-            android:textAllCaps="false"
-            android:layout_marginVertical="4dp" />
+            app:icon="@drawable/ic_folder"
+            app:iconTint="@color/text_primary"
+            app:strokeColor="@color/brand_orange" />
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="@color/divider" android:layout_marginVertical="20dp" />
+            android:background="@color/divider" android:layout_marginVertical="22dp" />
 
         <TextView
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="SHS Tube v2.0 — 5-in-1 monolith"
+            android:text="SHS Tube  v2.2.0-snaptube"
             android:textColor="@color/text_muted" android:textSize="12sp" />
 
         <TextView
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Browser • Native AdBlock • Media Sniffer • yt-dlp Downloader • libtorrent4j Torrents"
+            android:text="Browser • Native AdBlock • Media Sniffer • yt-dlp + Room • libtorrent4j • Snaptube share"
             android:textColor="@color/text_muted" android:textSize="11sp"
-            android:gravity="center" android:layout_marginTop="6dp" />
+            android:gravity="center" android:layout_marginTop="6dp"
+            android:paddingBottom="20dp" />
     </LinearLayout>
 </ScrollView>

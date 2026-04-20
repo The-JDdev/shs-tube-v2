@@ -9,41 +9,59 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
 import com.shslab.shstube.R
+import com.shslab.shstube.data.StoragePrefs
 
 class AboutFragment : Fragment() {
+
+    private val safPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
+        if (uri != null) {
+            StoragePrefs.setTreeUri(requireContext(), uri)
+            view?.findViewById<TextView>(R.id.storage_path)?.text =
+                StoragePrefs.displayLocation(requireContext())
+            Toast.makeText(requireContext(), "Folder updated", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, b: Bundle?): View {
         val v = i.inflate(R.layout.fragment_about, c, false)
 
         v.findViewById<TextView>(R.id.dev_name).text = "SHS Shobuj (JD)"
         v.findViewById<TextView>(R.id.dev_email).text = "jdvijay878@gmail.com"
-        v.findViewById<TextView>(R.id.bkash_number).text = "bKash: 01310211442"
+        v.findViewById<TextView>(R.id.bkash_number).text = "01310211442"
+        v.findViewById<TextView>(R.id.storage_path).text = StoragePrefs.displayLocation(requireContext())
 
-        v.findViewById<Button>(R.id.btn_copy_bkash).setOnClickListener {
+        v.findViewById<MaterialButton>(R.id.btn_copy_bkash).setOnClickListener {
             val cm = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             cm.setPrimaryClip(ClipData.newPlainText("bKash Number", "01310211442"))
             Toast.makeText(requireContext(), "bKash number copied: 01310211442", Toast.LENGTH_SHORT).show()
         }
 
-        v.findViewById<Button>(R.id.btn_email).setOnClickListener {
+        v.findViewById<MaterialButton>(R.id.btn_email).setOnClickListener {
             try {
-                val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:jdvijay878@gmail.com"))
-                startActivity(intent)
+                startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:jdvijay878@gmail.com")))
             } catch (_: Throwable) {
                 Toast.makeText(requireContext(), "No email app installed", Toast.LENGTH_SHORT).show()
             }
         }
 
-        v.findViewById<Button>(R.id.btn_facebook).setOnClickListener {
+        v.findViewById<MaterialButton>(R.id.btn_facebook).setOnClickListener {
             openUrl("https://www.facebook.com/itsshsshobuj")
         }
-        v.findViewById<Button>(R.id.btn_telegram).setOnClickListener {
+        v.findViewById<MaterialButton>(R.id.btn_telegram).setOnClickListener {
             openUrl("https://t.me/aamoviesofficial")
+        }
+
+        v.findViewById<MaterialButton>(R.id.btn_change_folder).setOnClickListener {
+            try { safPicker.launch(null) }
+            catch (t: Throwable) {
+                Toast.makeText(requireContext(), "Folder picker unavailable: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
         }
 
         return v

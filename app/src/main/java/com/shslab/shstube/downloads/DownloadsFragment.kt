@@ -9,30 +9,35 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shslab.shstube.R
+import com.shslab.shstube.data.DownloadEntity
+import com.shslab.shstube.data.DownloadRepository
 
 /**
- * v2.1.2-titan: ZERO-FRICTION single-button download.
+ * Live download dashboard backed by Room. Items survive app death / reboot.
  *
- * One input field. One "Download" button. SmartDownloadRouter inspects the URL
- * and routes to the right engine on Dispatchers.IO — no second click needed.
+ * The RecyclerView observes Repository.observeAll() so we get push-style updates whenever
+ * DownloadService writes a new progress row.
  */
 class DownloadsFragment : Fragment() {
 
     private lateinit var adapter: DownloadsAdapter
-    private val refresh: () -> Unit = { view?.post { adapter.notifyDataSetChanged() } }
 
     private val pickTorrent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode != Activity.RESULT_OK) return@registerForActivityResult
         val uri = res.data?.data ?: return@registerForActivityResult
         try {
-            val bytes = requireContext().contentResolver.openInputStream(uri).use { it?.readBytes() ?: ByteArray(0) }
+            val bytes = requireContext().contentResolver.openInputStream(uri).use { stream ->
+                stream?.readBytes() ?: ByteArray(0)
+            }
             if (bytes.isEmpty()) {
                 Toast.makeText(requireContext(), "Empty file", Toast.LENGTH_SHORT).show()
                 return@registerForActivityResult
@@ -53,19 +58,17 @@ class DownloadsFragment : Fragment() {
         val btnBatch  = v.findViewById<Button>(R.id.btn_batch_add)
         val batchInput = v.findViewById<EditText>(R.id.input_batch)
 
-        // Auto-select on focus — pasting over the placeholder
         input.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) input.selectAll() }
 
-        adapter = DownloadsAdapter(DownloadQueue.items)
+        adapter = DownloadsAdapter()
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
 
-        fun rebind() {
-            empty.visibility = if (DownloadQueue.items.isEmpty()) View.VISIBLE else View.GONE
-            adapter.notifyDataSetChanged()
+        // Live observe Room
+        DownloadRepository.observeAll().observe(viewLifecycleOwner) { rows ->
+            adapter.submit(rows)
+            empty.visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
         }
-        rebind()
-        DownloadQueue.listen(refresh)
 
         btnDownload.setOnClickListener {
             val u = input.text.toString().trim()
@@ -75,7 +78,6 @@ class DownloadsFragment : Fragment() {
             }
             SmartDownloadRouter.route(requireActivity(), u)
             input.setText("")
-            rebind()
         }
 
         btnPickTorrent.setOnClickListener {
@@ -96,43 +98,102 @@ class DownloadsFragment : Fragment() {
             val n = DownloadQueue.addBatch(text)
             Toast.makeText(requireContext(), "Queued $n URL(s)", Toast.LENGTH_SHORT).show()
             batchInput.setText("")
-            rebind()
         }
         return v
     }
-
-    override fun onDestroyView() {
-        DownloadQueue.unlisten(refresh)
-        super.onDestroyView()
-    }
 }
 
-private class DownloadsAdapter(val data: MutableList<DownloadItem>) :
-    RecyclerView.Adapter<DownloadsAdapter.VH>() {
+/** Live-updating adapter with DiffUtil — smooth animated changes as progress ticks. */
+private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
+
+    private val data = mutableListOf<DownloadEntity>()
+
+    fun submit(newList: List<DownloadEntity>) {
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = data.size
+            override fun getNewListSize(): Int = newList.size
+            override fun areItemsTheSame(o: Int, n: Int): Boolean = data[o].id == newList[n].id
+            override fun areContentsTheSame(o: Int, n: Int): Boolean = data[o] == newList[n]
+        })
+        data.clear()
+        data.addAll(newList)
+        diff.dispatchUpdatesTo(this)
+    }
+
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val title: TextView  = v.findViewById(R.id.dl_title)
         val sub: TextView    = v.findViewById(R.id.dl_sub)
         val status: TextView = v.findViewById(R.id.dl_status)
+        val speed: TextView  = v.findViewById(R.id.dl_speed)
+        val progress: ProgressBar = v.findViewById(R.id.dl_progress)
         val play: ImageButton = v.findViewById(R.id.dl_play)
     }
-    override fun onCreateViewHolder(p: ViewGroup, vt: Int) =
+
+    override fun onCreateViewHolder(p: ViewGroup, vt: Int): VH =
         VH(LayoutInflater.from(p.context).inflate(R.layout.item_download, p, false))
-    override fun getItemCount() = data.size
+
+    override fun getItemCount(): Int = data.size
+
     override fun onBindViewHolder(h: VH, pos: Int) {
         val item = data[pos]
         h.title.text = item.title.ifBlank { item.url.substringAfterLast('/').take(60) }
         h.sub.text   = "${item.source} • ${item.mime}"
-        h.status.text = item.status
+
+        val statusText = when (item.status) {
+            "queued"       -> "⏱  Queued"
+            "initializing" -> "⚙  Initialising engine…"
+            "downloading"  -> "⬇  Downloading  ${item.progress}%"
+            "completed"    -> "✓  Completed"
+            "failed"       -> "✗  ${item.errorMsg ?: "Failed"}"
+            "paused"       -> "⏸  Paused"
+            else           -> item.status
+        }
+        h.status.text = statusText
+
+        // Live speed + size readout
+        val speedStr = if (item.speedBps > 0) humanReadable(item.speedBps) + "/s" else ""
+        val sizeStr = if (item.totalBytes > 0)
+            humanReadable(item.downloadedBytes) + " / " + humanReadable(item.totalBytes)
+        else ""
+        h.speed.text = listOf(speedStr, sizeStr).filter { s -> s.isNotBlank() }.joinToString("  •  ")
+        h.speed.visibility = if (h.speed.text.isNullOrBlank()) View.GONE else View.VISIBLE
+
+        // Animated progress bar (DiffUtil + setProgress(p, animate=true) gives the fill animation)
+        val showProgress = item.status == "downloading" || item.status == "initializing"
+                || (item.progress in 1..99)
+        h.progress.visibility = if (showProgress || item.status == "completed") View.VISIBLE else View.GONE
+        h.progress.max = 100
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            h.progress.setProgress(item.progress, true)
+        } else {
+            h.progress.progress = item.progress
+        }
+        h.progress.isIndeterminate = item.status == "initializing"
+
         val lp = item.localPath
-        h.play.visibility = if (!lp.isNullOrBlank()) View.VISIBLE else View.GONE
+        h.play.visibility = if (!lp.isNullOrBlank() && item.status == "completed") View.VISIBLE else View.GONE
         h.play.setOnClickListener {
             val ctx = h.itemView.context
             val path = item.localPath ?: return@setOnClickListener
-            val intent = android.content.Intent(ctx, com.shslab.shstube.player.PlayerActivity::class.java).apply {
+            val intent = Intent(ctx, com.shslab.shstube.player.PlayerActivity::class.java).apply {
                 putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_URL, "file://$path")
                 putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_TITLE, item.title)
             }
             ctx.startActivity(intent)
         }
+
+        h.itemView.setOnLongClickListener {
+            DownloadRepository.deleteAsync(item.id)
+            Toast.makeText(h.itemView.context, "Removed from history", Toast.LENGTH_SHORT).show()
+            true
+        }
+    }
+
+    private fun humanReadable(bytes: Long): String {
+        if (bytes <= 0) return "0 B"
+        val units = arrayOf("B", "KB", "MB", "GB", "TB")
+        var v = bytes.toDouble(); var u = 0
+        while (v >= 1024.0 && u < units.lastIndex) { v /= 1024.0; u++ }
+        return "%.1f %s".format(v, units[u])
     }
 }

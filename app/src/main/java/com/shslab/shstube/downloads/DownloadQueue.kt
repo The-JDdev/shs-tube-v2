@@ -6,135 +6,114 @@ import android.net.Uri
 import android.os.Environment
 import com.shslab.shstube.ShsTubeApp
 import com.shslab.shstube.browser.MediaSniffer
-import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
+import com.shslab.shstube.data.DownloadEntity
+import com.shslab.shstube.data.DownloadRepository
+import com.shslab.shstube.data.StoragePrefs
+import com.shslab.shstube.service.DownloadService
 import kotlinx.coroutines.launch
-import java.io.File
-import java.util.concurrent.CopyOnWriteArrayList
 
-data class DownloadItem(
-    val url: String,
-    val title: String,
-    val mime: String,
-    val source: String,
-    var status: String = "queued",
-    var progress: Int = 0,
-    var localPath: String? = null,
-    val ts: Long = System.currentTimeMillis()
-)
-
+/**
+ * Thin compatibility facade over Room (DownloadRepository).
+ *
+ * All previous callers (BrowserFragment sniffer, FormatSheet quick-add, batch input,
+ * SmartRouter direct DM) keep working unchanged — the data is now persisted to SQLite
+ * so the list survives app death / reboot.
+ *
+ * For real foreground downloads with live progress we delegate to DownloadService.
+ */
 object DownloadQueue {
-    val items = CopyOnWriteArrayList<DownloadItem>()
-    private val listeners = CopyOnWriteArrayList<() -> Unit>()
 
+    /** Add a sniffed media item from the in-app browser. */
     fun add(m: MediaSniffer.SniffedMedia) {
-        items.add(0, DownloadItem(
-            url = m.url, title = m.title ?: m.url.substringAfterLast('/'),
-            mime = m.mime, source = m.sourcePage
-        ))
-        notifyChanged()
+        DownloadRepository.insertAsync(
+            DownloadEntity(
+                url = m.url,
+                title = m.title ?: m.url.substringAfterLast('/'),
+                mime = m.mime,
+                source = "browser-sniff",
+                status = "queued"
+            )
+        )
     }
 
+    /** Add a manual URL with optional mime hint. */
     fun add(url: String, mime: String = "auto", source: String = "manual") {
-        items.add(0, DownloadItem(
-            url = url,
-            title = url.substringAfterLast('/').ifBlank { url.take(60) },
-            mime = mime,
-            source = source
-        ))
-        notifyChanged()
+        DownloadRepository.insertAsync(
+            DownloadEntity(
+                url = url,
+                title = url.substringAfterLast('/').ifBlank { url.take(60) },
+                mime = mime,
+                source = source,
+                status = "queued"
+            )
+        )
     }
 
     fun addUrl(url: String, title: String = url.substringAfterLast('/')) {
-        items.add(0, DownloadItem(url, title, "auto", ""))
-        notifyChanged()
+        DownloadRepository.insertAsync(
+            DownloadEntity(
+                url = url, title = title, mime = "auto", source = "manual", status = "queued"
+            )
+        )
     }
 
-    /** Batch add — accepts a multi-line block, splits, dedupes, queues. */
+    /** Batch add — multi-line text, dedupes, queues. */
     fun addBatch(text: String): Int {
         val urls = text.split('\n', '\r', ' ', '\t')
-            .map { it.trim() }
-            .filter { it.startsWith("http://") || it.startsWith("https://") || it.startsWith("magnet:") }
+            .map { line -> line.trim() }
+            .filter { line -> line.startsWith("http://") || line.startsWith("https://") || line.startsWith("magnet:") }
             .distinct()
         for (u in urls) {
-            items.add(0, DownloadItem(u, u.substringAfterLast('/').ifBlank { u.take(60) }, "auto", "batch"))
+            DownloadRepository.insertAsync(
+                DownloadEntity(
+                    url = u,
+                    title = u.substringAfterLast('/').ifBlank { u.take(60) },
+                    mime = "auto", source = "batch", status = "queued"
+                )
+            )
         }
-        if (urls.isNotEmpty()) notifyChanged()
         return urls.size
     }
 
-    /**
-     * Direct-download via Android system DownloadManager.
-     * Best for already-resolved direct media URLs (sniffed videos, images).
-     */
+    /** Direct download via system DownloadManager (already-resolved direct media URLs). */
     fun startDirect(ctx: Context, url: String) {
-        try {
-            val dm = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val req = DownloadManager.Request(Uri.parse(url))
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-                .setDestinationInExternalPublicDir(
-                    Environment.DIRECTORY_DOWNLOADS,
-                    "SHSTube/" + url.substringAfterLast('/').ifBlank { "file_${System.currentTimeMillis()}" }
-                )
-                .setAllowedOverMetered(true)
-                .setAllowedOverRoaming(true)
-            dm.enqueue(req)
-            // Mark the matching queue row
-            items.firstOrNull { it.url == url }?.let {
-                it.status = "✓ system DM"
-                it.progress = 100
+        ShsTubeApp.appScope.launch {
+            val rowId = DownloadRepository.insert(
+                DownloadEntity(url = url, title = url.substringAfterLast('/'),
+                    source = "system-dm", status = "downloading")
+            )
+            try {
+                val dm = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                val req = DownloadManager.Request(Uri.parse(url))
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                    .setDestinationInExternalPublicDir(
+                        Environment.DIRECTORY_DOWNLOADS,
+                        "SHSTube/" + url.substringAfterLast('/').ifBlank { "file_${System.currentTimeMillis()}" }
+                    )
+                    .setAllowedOverMetered(true)
+                    .setAllowedOverRoaming(true)
+                dm.enqueue(req)
+                DownloadRepository.markCompleted(rowId, "queued (system DM)", null)
+            } catch (t: Throwable) {
+                DownloadRepository.markFailed(rowId, t.message ?: t.javaClass.simpleName)
             }
-            notifyChanged()
-        } catch (t: Throwable) {
-            items.firstOrNull { it.url == url }?.let {
-                it.status = "error: ${t.message?.take(60)}"
-            }
-            notifyChanged()
         }
     }
 
     /**
-     * yt-dlp download — best quality video+audio merged.
-     * Runs on appScope (Dispatchers.IO) so it never blocks UI.
+     * yt-dlp download — best quality video+audio merged. Delegates to DownloadService for
+     * a real foreground notification + live Room-backed progress updates.
      */
     fun startYtDlp(url: String) {
-        val item = items.firstOrNull { it.url == url }
-            ?: DownloadItem(url, url.substringAfterLast('/'), "auto", "yt-dlp")
-                .also { items.add(0, it) }
-
-        ShsTubeApp.appScope.launch {
-            try {
-                val outDir = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "SHSTube"
-                ).apply { if (!exists()) mkdirs() }
-                val req = YoutubeDLRequest(url).apply {
-                    addOption("-o", File(outDir, "%(title)s.%(ext)s").absolutePath)
-                    addOption("--no-playlist")
-                    addOption("-f", "bestvideo+bestaudio/best")
-                    addOption("--sponsorblock-remove", "sponsor,intro,outro,selfpromo")
-                }
-                YoutubeDL.getInstance().execute(req) { progress, _, _ ->
-                    item.progress = progress.toInt()
-                    item.status = "yt-dlp ${progress.toInt()}%"
-                    notifyChanged()
-                }
-                item.status = "✓ done"
-                item.progress = 100
-                // Best-effort: find the most recent file in outDir
-                outDir.listFiles()
-                    ?.maxByOrNull { it.lastModified() }
-                    ?.let { item.localPath = it.absolutePath }
-            } catch (t: Throwable) {
-                item.status = "error: ${t.message?.take(80)}"
-            } finally {
-                notifyChanged()
-            }
-        }
+        DownloadService.enqueue(
+            ShsTubeApp.instance,
+            url = url,
+            title = url.substringAfterLast('/'),
+            formatId = null,        // null = bestvideo+bestaudio/best
+            audioOnly = false
+        )
     }
 
-    fun update(item: DownloadItem) { notifyChanged() }
-    fun listen(l: () -> Unit) { listeners.add(l) }
-    fun unlisten(l: () -> Unit) { listeners.remove(l) }
-    fun notifyChanged() { listeners.forEach { try { it() } catch (_: Throwable) {} } }
+    /** Where downloads end up (for UI / settings display). */
+    fun displayDownloadLocation(ctx: Context): String = StoragePrefs.displayLocation(ctx)
 }

@@ -2,7 +2,6 @@ package com.shslab.shstube.downloads
 
 import android.app.Dialog
 import android.os.Bundle
-import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,34 +9,32 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.shslab.shstube.R
 import com.shslab.shstube.ShsTubeApp
+import com.shslab.shstube.service.DownloadService
 import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 /**
- * Quality picker bottom sheet.
+ * In-app quality picker (used by Browser long-press / SmartRouter for normal http URLs).
  *
- * Calls `yt-dlp --dump-json` via youtubedl-android to get every available
- * video/audio format, presents them in a list with resolution + codec + size,
- * and starts the download with `-f <format_id>` when the user picks one.
- *
- * Has a built-in "Audio only (m4a)" and "Best video+audio" shortcut at the top.
+ * Backed by yt-dlp `getInfo()`. Selecting a row delegates to DownloadService — the row
+ * appears live in DownloadsFragment via Room observation.
  */
 class FormatSheet : BottomSheetDialogFragment() {
 
     private val formats = mutableListOf<FormatRow>()
     private lateinit var url: String
     private var titleHint: String = ""
+    private var resolvedTitle: String = ""
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val d = BottomSheetDialog(requireContext(), theme)
@@ -61,15 +58,15 @@ class FormatSheet : BottomSheetDialogFragment() {
         tvTitle.text = titleHint.ifBlank { "Select quality" }
         tvUrl.text = url
 
-        val adapter = FormatAdapter(formats) { row -> startDownload(row.formatId, row.label) }
+        val adapter = FormatAdapter(formats) { row -> startDownload(row.formatId, row.label, row.audioOnly) }
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
 
         btnAudio.setOnClickListener {
-            startDownload("bestaudio[ext=m4a]/bestaudio", "Audio (m4a)")
+            startDownload("bestaudio[ext=m4a]/bestaudio", "Audio (m4a)", audioOnly = true)
         }
         btnBest.setOnClickListener {
-            startDownload("bestvideo+bestaudio/best", "Best video+audio")
+            startDownload("bestvideo+bestaudio/best", "Best video+audio", audioOnly = false)
         }
         btnCancel.setOnClickListener { dismiss() }
 
@@ -79,30 +76,31 @@ class FormatSheet : BottomSheetDialogFragment() {
             return v
         }
 
-        // Background fetch of formats
-        ShsTubeApp.appScope.launch {
+        // Background fetch of formats — wait for engine, then call yt-dlp
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (!ShsTubeApp.ytDlpReady) {
+                tvTitle.text = "Initialising yt-dlp engine…"
+                ShsTubeApp.awaitYtDlpReady(timeoutMs = 60_000)
+            }
             try {
-                val info = YoutubeDL.getInstance().getInfo(url)
+                val info = withContext(Dispatchers.IO) { YoutubeDL.getInstance().getInfo(url) }
                 val list = info.formats ?: emptyList()
                 val rows = list.mapNotNull { f -> toRow(f) }
-                    .sortedByDescending { it.score }
-                withContext(Dispatchers.Main) {
-                    formats.clear()
-                    formats.addAll(rows)
-                    adapter.notifyDataSetChanged()
-                    pb.visibility = View.GONE
-                    val safeTitle = info.title ?: titleHint
-                    if (safeTitle.isNotBlank()) tvTitle.text = safeTitle
-                }
+                    .sortedByDescending { row -> row.score }
+                formats.clear()
+                formats.addAll(rows)
+                adapter.notifyDataSetChanged()
+                pb.visibility = View.GONE
+                val safeTitle = info.title ?: titleHint
+                resolvedTitle = safeTitle
+                if (safeTitle.isNotBlank()) tvTitle.text = safeTitle
             } catch (t: Throwable) {
-                withContext(Dispatchers.Main) {
-                    pb.visibility = View.GONE
-                    Toast.makeText(
-                        requireContext(),
-                        "Format fetch failed: ${t.javaClass.simpleName}. Falling back to 'best' option.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                pb.visibility = View.GONE
+                Toast.makeText(
+                    requireContext(),
+                    "Format fetch failed: ${t.javaClass.simpleName}. Use 'Best' to download.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
         return v
@@ -116,61 +114,32 @@ class FormatSheet : BottomSheetDialogFragment() {
             val acodec = f.acodec ?: ""
             val res = if (f.height > 0) "${f.height}p" else ""
             val sizeMb = if (f.fileSize > 0) " • ${f.fileSize / (1024 * 1024)} MB" else ""
+            val isAudio = (vcodec == "none" || vcodec.isBlank()) && acodec.isNotBlank() && acodec != "none"
             val tag = when {
                 vcodec != "none" && vcodec.isNotBlank() && acodec != "none" && acodec.isNotBlank() -> "🎞 video+audio"
                 vcodec != "none" && vcodec.isNotBlank() -> "🎬 video only"
-                acodec != "none" && acodec.isNotBlank() -> "🎧 audio only"
+                isAudio -> "🎧 audio only"
                 else -> "?"
             }
             val label = "$tag • $res • $ext$sizeMb"
-            // Score for sort: video resolution beats audio. Bigger = higher.
             val score = (if (f.height > 0) f.height else 0) * 1000 + (f.fileSize / (1024L * 1024L)).toInt()
-            FormatRow(id, label, score)
+            FormatRow(id, label, score, isAudio)
         } catch (_: Throwable) {
             null
         }
     }
 
-    private fun startDownload(formatSpec: String, label: String) {
-        val item = DownloadItem(
-            url = url,
-            title = (titleHint.ifBlank { url.substringAfterLast('/') }) + " — $label",
-            mime = "auto", source = "format-sheet"
+    private fun startDownload(formatSpec: String, label: String, audioOnly: Boolean) {
+        val title = (resolvedTitle.ifBlank { titleHint.ifBlank { url.substringAfterLast('/') } }) + " — $label"
+        DownloadService.enqueue(
+            requireContext().applicationContext,
+            url = url, title = title, formatId = formatSpec, audioOnly = audioOnly
         )
-        DownloadQueue.items.add(0, item)
-        DownloadQueue.notifyChanged()
-        Toast.makeText(requireContext(), "Starting yt-dlp ($label)…", Toast.LENGTH_SHORT).show()
-
-        ShsTubeApp.appScope.launch {
-            try {
-                val outDir = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "SHSTube"
-                ).apply { if (!exists()) mkdirs() }
-                val req = YoutubeDLRequest(url).apply {
-                    addOption("-o", File(outDir, "%(title)s.%(ext)s").absolutePath)
-                    addOption("--no-playlist")
-                    addOption("-f", formatSpec)
-                    // SponsorBlock: skip sponsor/intro/outro segments by default for YouTube
-                    addOption("--sponsorblock-remove", "sponsor,intro,outro,selfpromo")
-                }
-                YoutubeDL.getInstance().execute(req) { progress, _, _ ->
-                    item.progress = progress.toInt()
-                    item.status = "yt-dlp ${progress.toInt()}%"
-                    DownloadQueue.notifyChanged()
-                }
-                item.status = "✓ done"
-                item.progress = 100
-            } catch (t: Throwable) {
-                item.status = "error: ${t.message?.take(80)}"
-            } finally {
-                DownloadQueue.notifyChanged()
-            }
-        }
+        Toast.makeText(requireContext(), "Queued: $label", Toast.LENGTH_SHORT).show()
         dismiss()
     }
 
-    data class FormatRow(val formatId: String, val label: String, val score: Int)
+    data class FormatRow(val formatId: String, val label: String, val score: Int, val audioOnly: Boolean)
 
     companion object {
         const val ARG_URL = "url"
@@ -197,7 +166,7 @@ private class FormatAdapter(
         val v = LayoutInflater.from(p.context).inflate(R.layout.item_format, p, false)
         return VH(v)
     }
-    override fun getItemCount() = data.size
+    override fun getItemCount(): Int = data.size
     override fun onBindViewHolder(h: VH, pos: Int) {
         val row = data[pos]
         h.label.text = row.label
