@@ -36,7 +36,9 @@ class DownloadsFragment : Fragment() {
         val rv = v.findViewById<RecyclerView>(R.id.rv_downloads)
         val empty = v.findViewById<TextView>(R.id.empty_state)
         val urlInput = v.findViewById<EditText>(R.id.input_url)
+        val batchInput = v.findViewById<EditText>(R.id.input_batch)
         val btnAdd = v.findViewById<Button>(R.id.btn_add_url)
+        val btnBatch = v.findViewById<Button>(R.id.btn_batch_add)
         val btnYtdlp = v.findViewById<Button>(R.id.btn_ytdlp)
         val btnDirect = v.findViewById<Button>(R.id.btn_direct)
 
@@ -56,6 +58,18 @@ class DownloadsFragment : Fragment() {
             if (u.isEmpty()) return@setOnClickListener
             DownloadQueue.addUrl(u)
             urlInput.setText("")
+            rebind()
+        }
+
+        btnBatch.setOnClickListener {
+            val txt = batchInput.text.toString()
+            if (txt.isBlank()) {
+                Toast.makeText(requireContext(), "Paste URLs first (one per line)", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val n = DownloadQueue.addBatch(txt)
+            batchInput.setText("")
+            Toast.makeText(requireContext(), "Queued $n URL(s) — tap yt-dlp or Direct to start", Toast.LENGTH_LONG).show()
             rebind()
         }
 

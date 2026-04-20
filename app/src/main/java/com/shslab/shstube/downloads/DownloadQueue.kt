@@ -31,6 +31,19 @@ object DownloadQueue {
         notifyChanged()
     }
 
+    /** Batch add — accepts a multi-line block, splits, dedupes, queues. */
+    fun addBatch(text: String): Int {
+        val urls = text.split('\n', '\r', ' ', '\t')
+            .map { it.trim() }
+            .filter { it.startsWith("http://") || it.startsWith("https://") || it.startsWith("magnet:") }
+            .distinct()
+        for (u in urls) {
+            items.add(0, DownloadItem(u, u.substringAfterLast('/').ifBlank { u.take(60) }, "auto", "batch"))
+        }
+        if (urls.isNotEmpty()) notifyChanged()
+        return urls.size
+    }
+
     fun update(item: DownloadItem) { notifyChanged() }
     fun listen(l: () -> Unit) { listeners.add(l) }
     fun unlisten(l: () -> Unit) { listeners.remove(l) }

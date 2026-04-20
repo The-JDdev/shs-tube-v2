@@ -44,6 +44,23 @@
             android:textColor="@color/white" />
     </LinearLayout>
 
+    <EditText android:id="@+id/input_batch"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:minLines="3" android:maxLines="6"
+        android:gravity="top|start"
+        android:hint="@string/batch_paste"
+        android:inputType="textMultiLine"
+        android:textColor="@color/text_primary" android:textColorHint="@color/text_muted"
+        android:background="@color/bg_surface" android:padding="10dp" />
+
+    <Button android:id="@+id/btn_batch_add"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/batch_add"
+        android:backgroundTint="@color/brand_accent"
+        android:textColor="@color/white" />
+
     <TextView android:id="@+id/empty_state"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:gravity="center" android:padding="24dp"
