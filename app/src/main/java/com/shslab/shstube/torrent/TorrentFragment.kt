@@ -1,5 +1,7 @@
 package com.shslab.shstube.torrent
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,15 +11,32 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shslab.shstube.R
+import com.shslab.shstube.downloads.SmartDownloadRouter
 
 class TorrentFragment : Fragment() {
 
     private lateinit var adapter: TorrentAdapter
     private val refresh: () -> Unit = { view?.post { adapter.notifyDataSetChanged() } }
+
+    private val pickTorrent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val uri = res.data?.data ?: return@registerForActivityResult
+        try {
+            val bytes = requireContext().contentResolver.openInputStream(uri).use { it?.readBytes() ?: ByteArray(0) }
+            if (bytes.isEmpty()) {
+                Toast.makeText(requireContext(), "Empty file", Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+            SmartDownloadRouter.fromLocalTorrentBytes(requireActivity(), bytes)
+        } catch (t: Throwable) {
+            Toast.makeText(requireContext(), "Could not read file: ${t.message}", Toast.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, b: Bundle?): View {
         val v = i.inflate(R.layout.fragment_torrent, c, false)
@@ -27,18 +46,18 @@ class TorrentFragment : Fragment() {
         val btnSettings = v.findViewById<ImageButton>(R.id.btn_torrent_settings)
         val status = v.findViewById<TextView>(R.id.engine_status)
         val empty = v.findViewById<TextView>(R.id.empty_state)
+        val btnPick = v.findViewById<Button?>(R.id.btn_pick_torrent_file)
 
         adapter = TorrentAdapter(TorrentEngine.rows)
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
 
-        // Apply persisted torrent settings on entry (in case engine was restarted)
         TorrentSettingsDialog.applyOnStartup(requireContext())
 
         fun rebind() {
             empty.visibility = if (TorrentEngine.rows.isEmpty()) View.VISIBLE else View.GONE
             status.text = if (TorrentEngine.nativeReady)
-                "✓ Torrent engine running (${TorrentEngine.rows.size} torrent(s))"
+                "✓ Torrent engine running (${TorrentEngine.rows.size} active)"
             else "⚠ Engine offline: ${TorrentEngine.nativeError ?: "starting..."}"
             adapter.notifyDataSetChanged()
         }
@@ -47,14 +66,27 @@ class TorrentFragment : Fragment() {
 
         btn.setOnClickListener {
             val m = input.text.toString().trim()
-            if (!m.startsWith("magnet:")) {
-                Toast.makeText(requireContext(), "Paste a magnet:?xt=urn:btih:... link", Toast.LENGTH_SHORT).show()
+            if (m.isEmpty()) {
+                Toast.makeText(requireContext(), "Paste a magnet or .torrent URL", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val res = TorrentEngine.addMagnet(m)
-            Toast.makeText(requireContext(), res, Toast.LENGTH_SHORT).show()
+            // Route through SmartDownloadRouter — handles magnet:, https://...torrent, etc.
+            SmartDownloadRouter.route(requireActivity(), m)
             input.setText("")
             rebind()
+        }
+
+        btnPick?.setOnClickListener {
+            try {
+                val pick = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/x-bittorrent", "application/octet-stream", "*/*"))
+                }
+                pickTorrent.launch(pick)
+            } catch (t: Throwable) {
+                Toast.makeText(requireContext(), "Picker unavailable: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
         }
 
         btnSettings.setOnClickListener { TorrentSettingsDialog.show(requireContext()) }

@@ -9,44 +9,46 @@
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="@string/tab_downloads" android:textSize="22sp"
         android:textStyle="bold" android:textColor="@color/text_primary"
-        android:paddingBottom="12dp" />
+        android:paddingBottom="6dp" />
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Paste any link — YouTube, Facebook, magnet, .torrent. We'll figure it out."
+        android:textSize="12sp" android:textColor="@color/text_muted"
+        android:paddingBottom="10dp" />
 
     <EditText android:id="@+id/input_url"
         android:layout_width="match_parent" android:layout_height="48dp"
-        android:hint="@string/hint_paste_url"
+        android:hint="https://… or magnet:?xt=urn:btih:…"
         android:singleLine="true" android:inputType="textUri"
         android:textColor="@color/text_primary" android:textColorHint="@color/text_muted"
         android:background="@color/bg_surface" android:paddingHorizontal="12dp" />
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:paddingTop="8dp">
+    <Button android:id="@+id/btn_download"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Download"
+        android:textStyle="bold"
+        android:backgroundTint="@color/brand_blue"
+        android:textColor="@color/white" />
 
-        <Button android:id="@+id/btn_picker"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:text="@string/download_picker"
-            android:backgroundTint="@color/brand_blue"
-            android:textColor="@color/white" />
+    <Button android:id="@+id/btn_pick_torrent"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Open .torrent file from device"
+        android:backgroundTint="@color/bg_surface"
+        android:textColor="@color/text_primary" />
 
-        <Space android:layout_width="6dp" android:layout_height="wrap_content"/>
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="@color/bg_surface"
+        android:layout_marginTop="14dp" android:layout_marginBottom="10dp"/>
 
-        <Button android:id="@+id/btn_direct"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:text="@string/download_direct"
-            android:backgroundTint="@color/success"
-            android:textColor="@color/white" />
-
-        <Space android:layout_width="6dp" android:layout_height="wrap_content"/>
-
-        <Button android:id="@+id/btn_ytdlp"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:text="@string/download_ytdlp"
-            android:backgroundTint="@color/brand_orange"
-            android:textColor="@color/white" />
-    </LinearLayout>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Batch (one URL per line)"
+        android:textSize="12sp" android:textColor="@color/text_muted"/>
 
     <EditText android:id="@+id/input_batch"
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="4dp"
         android:minLines="3" android:maxLines="6"
         android:gravity="top|start"
         android:hint="@string/batch_paste"

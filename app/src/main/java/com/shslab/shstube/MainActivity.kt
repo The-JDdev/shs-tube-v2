@@ -15,6 +15,7 @@ import com.shslab.shstube.about.AboutFragment
 import com.shslab.shstube.browser.BrowserFragment
 import com.shslab.shstube.downloads.DownloadsFragment
 import com.shslab.shstube.downloads.FormatSheet
+import com.shslab.shstube.downloads.SmartDownloadRouter
 import com.shslab.shstube.search.SearchFragment
 import com.shslab.shstube.torrent.TorrentEngine
 import com.shslab.shstube.torrent.TorrentFragment
@@ -101,17 +102,11 @@ class MainActivity : AppCompatActivity() {
             // Pull the first URL out of the text (share text often has extra description).
             val url = Regex("""(?:https?://|magnet:\?)\S+""").find(text)?.value ?: return
 
-            when {
-                url.startsWith("magnet:") -> {
-                    val res = TorrentEngine.addMagnet(url)
-                    Toast.makeText(this, res, Toast.LENGTH_SHORT).show()
-                    bottomNav.selectedItemId = R.id.tab_torrents
-                }
-                else -> {
-                    Toast.makeText(this, "Got URL — opening quality picker…", Toast.LENGTH_SHORT).show()
-                    showFormatSheet(url, "Shared link")
-                }
+            // SmartRouter handles magnet:, .torrent URLs (with file selector), and HTTP media URLs.
+            if (url.startsWith("magnet:") || url.endsWith(".torrent", ignoreCase = true)) {
+                bottomNav.selectedItemId = R.id.tab_torrents
             }
+            SmartDownloadRouter.route(this, url)
         } catch (t: Throwable) {
             Log.e(ShsTubeApp.TAG, "handleIncoming", t)
         }

@@ -11,8 +11,8 @@ android {
         applicationId "com.shslab.shstube"
         minSdk 24
         targetSdk 34
-        versionCode 22
-        versionName "2.1.1-titan"
+        versionCode 23
+        versionName "2.1.2-titan"
         vectorDrawables.useSupportLibrary = true
 
         // Universal APK — ship every ABI

@@ -39,8 +39,15 @@
 
     <Button android:id="@+id/btn_add_magnet"
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:text="@string/add_magnet" android:backgroundTint="@color/brand_orange"
+        android:text="Resolve magnet / .torrent URL" android:backgroundTint="@color/brand_orange"
         android:textColor="@color/white" android:layout_marginTop="8dp" />
+
+    <Button android:id="@+id/btn_pick_torrent_file"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Open .torrent file from device"
+        android:backgroundTint="@color/bg_surface"
+        android:textColor="@color/text_primary"
+        android:layout_marginTop="6dp" />
 
     <TextView android:id="@+id/empty_state"
         android:layout_width="match_parent" android:layout_height="wrap_content"
