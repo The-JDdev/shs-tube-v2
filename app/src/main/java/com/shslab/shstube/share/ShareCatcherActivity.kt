@@ -14,17 +14,28 @@ import kotlinx.coroutines.withContext
 
 /**
  * Snaptube-style transparent capture activity.
+ *
+ * The system share-sheet routes ACTION_SEND text/plain (URLs from YouTube, Chrome, FB, IG, TG, etc.)
+ * here INSTEAD of MainActivity. We:
+ *   1. Show NO UI of our own (translucent theme)
+ *   2. Fetch available formats in the background via yt-dlp (or hand magnets to the torrent engine)
+ *   3. Pop a single ShareSheetFragment BottomSheet *over* the previous app
+ *   4. finish() as soon as the user picks a format (or dismisses)
+ *
+ * The actual download is delegated to DownloadService — runs even after we finish().
  */
 class ShareCatcherActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Translucent theme — no setContentView needed
         val url = extractUrl(intent)
         if (url.isNullOrBlank()) {
             Toast.makeText(this, "SHS Tube: no URL in share", Toast.LENGTH_SHORT).show()
             finish(); return
         }
 
+        // Magnet / .torrent → straight to the torrent path with file selector
         if (url.startsWith("magnet:", ignoreCase = true) ||
             url.endsWith(".torrent", ignoreCase = true)
         ) {
@@ -32,6 +43,7 @@ class ShareCatcherActivity : FragmentActivity() {
             return
         }
 
+        // Everything else (YouTube, FB, IG, TikTok, Twitter, …) → format picker sheet
         showShareSheet(url)
     }
 
@@ -60,6 +72,7 @@ class ShareCatcherActivity : FragmentActivity() {
     private fun handleTorrent(input: String) {
         Toast.makeText(this, "SHS Tube: resolving torrent…", Toast.LENGTH_SHORT).show()
         ShsTubeApp.appScope.launch {
+            // Wait for torrent engine if it's still booting
             var waited = 0
             while (!TorrentEngine.nativeReady && waited < 5_000) {
                 kotlinx.coroutines.delay(250); waited += 250
@@ -101,11 +114,7 @@ class ShareCatcherActivity : FragmentActivity() {
         }
     }
 
-    /**
-     * Pull the first http(s)/magnet URL out of share text (which often contains description).
-     * Strips trailing sentence punctuation so URLs like "watch this: https://youtu.be/abc." do
-     * not get passed to yt-dlp with a trailing dot (which breaks format resolution).
-     */
+    /** Pull the first http(s)/magnet URL out of share text (which often contains description). */
     private fun extractUrl(intent: Intent?): String? {
         if (intent == null) return null
         val raw: String? = when (intent.action) {
@@ -114,8 +123,7 @@ class ShareCatcherActivity : FragmentActivity() {
             else -> null
         }
         val text = raw ?: return null
-        val match = Regex("""(?:https?://|magnet:\?)\S+""").find(text)?.value ?: return null
-        return match.trimEnd('.', ',', ';', '!', '?', ')', ']', '>', '"', '\'', '`')
+        return Regex("""(?:https?://|magnet:\?)\S+""").find(text)?.value
     }
 
     fun onSheetClosed() {

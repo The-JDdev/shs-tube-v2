@@ -11,8 +11,7 @@ import kotlinx.coroutines.withContext
 /**
  * Single repository facade in front of the Room DAO. All UI + services go through here.
  *
- * Lifecycle-friendly: every mutation runs on Dispatchers.IO via the app-scoped CoroutineScope,
- * but completion callbacks that may touch UI are dispatched back to Dispatchers.Main.
+ * Lifecycle-friendly: every mutation runs on Dispatchers.IO via the app-scoped CoroutineScope.
  */
 object DownloadRepository {
 
@@ -41,14 +40,10 @@ object DownloadRepository {
         requireDao().insert(item)
     }
 
-    /**
-     * Inserts asynchronously. The [onInserted] callback is invoked on Dispatchers.Main so UI
-     * code (adapters, Toasts, navigation) can react without CalledFromWrongThreadException.
-     */
     fun insertAsync(item: DownloadEntity, onInserted: (Long) -> Unit = {}) {
         ShsTubeApp.appScope.launch {
-            val id = withContext(Dispatchers.IO) { requireDao().insert(item) }
-            withContext(Dispatchers.Main) { onInserted(id) }
+            val id = requireDao().insert(item)
+            onInserted(id)
         }
     }
 

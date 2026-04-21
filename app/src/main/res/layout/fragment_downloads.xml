@@ -14,7 +14,17 @@
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="Paste any link — YouTube, Facebook, magnet, .torrent. We'll figure it out."
         android:textSize="12sp" android:textColor="@color/text_muted"
-        android:paddingBottom="10dp" />
+        android:paddingBottom="6dp" />
+
+    <TextView android:id="@+id/engine_status"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Engines: starting…"
+        android:textSize="11sp"
+        android:textColor="@color/text_muted"
+        android:background="@color/bg_surface"
+        android:padding="8dp"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="monospace" />
 
     <EditText android:id="@+id/input_url"
         android:layout_width="match_parent" android:layout_height="48dp"

@@ -3,6 +3,8 @@ package com.shslab.shstube.downloads
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,18 +20,35 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.shslab.shstube.R
+import com.shslab.shstube.ShsTubeApp
 import com.shslab.shstube.data.DownloadEntity
 import com.shslab.shstube.data.DownloadRepository
+import com.shslab.shstube.service.DownloadService
+import com.shslab.shstube.torrent.TorrentEngine
 
 /**
  * Live download dashboard backed by Room. Items survive app death / reboot.
  *
  * The RecyclerView observes Repository.observeAll() so we get push-style updates whenever
  * DownloadService writes a new progress row.
+ *
+ * Active rows show a Cancel (✕) button that fires DownloadService.ACTION_CANCEL,
+ * which kills the yt-dlp process and wipes any .part / .ytdl temp files.
+ *
+ * The header shows live engine health so init failures are immediately visible
+ * (no more silent "search blank, downloads dead" mystery).
  */
 class DownloadsFragment : Fragment() {
 
     private lateinit var adapter: DownloadsAdapter
+    private var statusHandler: Handler? = null
+    private val statusRunnable = object : Runnable {
+        override fun run() {
+            updateEngineStatus()
+            statusHandler?.postDelayed(this, 1500)
+        }
+    }
+    private var statusView: TextView? = null
 
     private val pickTorrent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode != Activity.RESULT_OK) return@registerForActivityResult
@@ -57,6 +76,7 @@ class DownloadsFragment : Fragment() {
         val btnPickTorrent = v.findViewById<Button>(R.id.btn_pick_torrent)
         val btnBatch  = v.findViewById<Button>(R.id.btn_batch_add)
         val batchInput = v.findViewById<EditText>(R.id.input_batch)
+        statusView = v.findViewById(R.id.engine_status)
 
         input.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) input.selectAll() }
 
@@ -99,7 +119,40 @@ class DownloadsFragment : Fragment() {
             Toast.makeText(requireContext(), "Queued $n URL(s)", Toast.LENGTH_SHORT).show()
             batchInput.setText("")
         }
+
+        statusHandler = Handler(Looper.getMainLooper())
+        statusHandler?.post(statusRunnable)
         return v
+    }
+
+    override fun onDestroyView() {
+        statusHandler?.removeCallbacks(statusRunnable)
+        statusHandler = null
+        statusView = null
+        super.onDestroyView()
+    }
+
+    private fun updateEngineStatus() {
+        val ytOk = ShsTubeApp.ytDlpReady
+        val ytErr = ShsTubeApp.ytDlpInitError
+        val npOk = ShsTubeApp.newPipeReady
+        val tOk = ShsTubeApp.torrentReady
+        val tErr = TorrentEngine.nativeError
+
+        val parts = listOf(
+            "yt-dlp" to (ytOk to ytErr),
+            "NewPipe" to (npOk to null),
+            "Torrent" to (tOk to tErr)
+        )
+        val line = parts.joinToString("  ") { (name, st) ->
+            val (ok, _) = st
+            "$name " + if (ok) "✓" else "…"
+        }
+        val errs = parts.mapNotNull { (name, st) ->
+            val (ok, err) = st
+            if (!ok && !err.isNullOrBlank()) "$name: ${err.take(60)}" else null
+        }
+        statusView?.text = if (errs.isEmpty()) line else line + "\n" + errs.joinToString("\n")
     }
 }
 
@@ -127,6 +180,7 @@ private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
         val speed: TextView  = v.findViewById(R.id.dl_speed)
         val progress: ProgressBar = v.findViewById(R.id.dl_progress)
         val play: ImageButton = v.findViewById(R.id.dl_play)
+        val cancel: ImageButton = v.findViewById(R.id.dl_cancel)
     }
 
     override fun onCreateViewHolder(p: ViewGroup, vt: Int): VH =
@@ -159,8 +213,8 @@ private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
         h.speed.visibility = if (h.speed.text.isNullOrBlank()) View.GONE else View.VISIBLE
 
         // Animated progress bar (DiffUtil + setProgress(p, animate=true) gives the fill animation)
-        val showProgress = item.status == "downloading" || item.status == "initializing"
-                || (item.progress in 1..99)
+        val isActive = item.status == "downloading" || item.status == "initializing" || item.status == "queued"
+        val showProgress = isActive || (item.progress in 1..99)
         h.progress.visibility = if (showProgress || item.status == "completed") View.VISIBLE else View.GONE
         h.progress.max = 100
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
@@ -180,6 +234,14 @@ private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
                 putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_TITLE, item.title)
             }
             ctx.startActivity(intent)
+        }
+
+        // Cancel (kill yt-dlp + wipe .part) — only for active rows
+        h.cancel.visibility = if (isActive) View.VISIBLE else View.GONE
+        h.cancel.setOnClickListener {
+            val ctx = h.itemView.context
+            DownloadService.cancel(ctx, item.id)
+            Toast.makeText(ctx, "Cancelling…", Toast.LENGTH_SHORT).show()
         }
 
         h.itemView.setOnLongClickListener {
