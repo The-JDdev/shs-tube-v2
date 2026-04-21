@@ -118,7 +118,14 @@ class BrowserFragment : Fragment() {
                 }
 
                 val pageHost = try { Uri.parse(view?.url ?: "").host ?: "" } catch (_: Throwable) { "" }
-                if (!BrowserSettings.isWhitelisted(requireContext(), pageHost)) {
+                val reqHost  = try { Uri.parse(url).host ?: "" } catch (_: Throwable) { "" }
+
+                // Allow all FIRST-PARTY sub-resources (same registered domain). EasyList rules
+                // for tracker subdomains of the host site itself would otherwise wreck pages.
+                val isFirstParty = reqHost.isNotEmpty() && pageHost.isNotEmpty() &&
+                    (reqHost == pageHost || reqHost.endsWith(".$pageHost") || pageHost.endsWith(".$reqHost"))
+
+                if (!isFirstParty && !BrowserSettings.isWhitelisted(requireContext(), pageHost)) {
                     AdBlocker.maybeBlock(url)?.let { blocked -> return blocked }
                 }
                 val accept = req.requestHeaders["Accept"]

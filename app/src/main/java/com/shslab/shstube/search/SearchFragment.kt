@@ -193,7 +193,40 @@ class SearchFragment : Fragment() {
                 }
             } catch (t: Throwable) {
                 errMsg = "${t.javaClass.simpleName}: ${t.message?.take(120)}"
+                com.shslab.shstube.util.DevLog.error("search", t, extra = "NewPipe search failed q=$query")
             }
+
+            // FALLBACK — if NewPipe returned zero (rate-limit / scrape blocked / parse error),
+            // ask yt-dlp's `ytsearch20:` for the same query. yt-dlp uses the tv/web client and
+            // is far more resilient to YouTube's anti-bot changes.
+            if (hits.isEmpty() && currentFilter == "videos" && ShsTubeApp.ytDlpReady) {
+                try {
+                    val req = com.yausername.youtubedl_android.YoutubeDLRequest("ytsearch20:$query").apply {
+                        addOption("--extractor-args", "youtube:player_client=tv,web")
+                        addOption("--no-playlist")
+                        addOption("--flat-playlist")
+                        addOption("--skip-download")
+                        addOption("--user-agent", com.shslab.shstube.service.DownloadService.USER_AGENT)
+                    }
+                    val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
+                    val entries = info.entries ?: emptyList()
+                    for (e in entries.take(50)) {
+                        val u = e.url ?: e.webpageUrl ?: continue
+                        hits += SearchHit(
+                            kind = HitKind.Video,
+                            title = e.title ?: "(no title)",
+                            url = if (u.startsWith("http")) u else "https://www.youtube.com/watch?v=$u",
+                            uploader = e.uploader ?: "",
+                            duration = formatDuration(e.duration?.toLong() ?: 0L)
+                        )
+                    }
+                    if (hits.isNotEmpty()) errMsg = null
+                    com.shslab.shstube.util.DevLog.info("search", "yt-dlp fallback returned ${hits.size} hits for '$query'")
+                } catch (t: Throwable) {
+                    com.shslab.shstube.util.DevLog.error("search", t, extra = "yt-dlp fallback failed q=$query")
+                }
+            }
+
             withContext(Dispatchers.Main) {
                 results.clear()
                 results.addAll(hits)

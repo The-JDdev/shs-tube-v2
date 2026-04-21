@@ -210,7 +210,9 @@ class DownloadService : Service() {
             // YouTube anti-bot bypass — modern UA + multi-client extractor fallback.
             // Without these YouTube returns "Sign in to confirm you're not a bot" / empty fmts.
             addOption("--user-agent", USER_AGENT)
-            addOption("--extractor-args", "youtube:player_client=android,web_safari,mweb")
+            // tv + web clients bypass the GVS PO Token requirement that blocks the android client
+            // (YouTube's "android client https formats require a GVS PO Token" → HTTP 403).
+            addOption("--extractor-args", "youtube:player_client=tv,web")
             addOption("--geo-bypass")
             if (audioOnly) {
                 addOption("-f", formatId ?: "bestaudio/best")

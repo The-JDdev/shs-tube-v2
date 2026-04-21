@@ -89,7 +89,8 @@ class FormatSheet : BottomSheetDialogFragment() {
                     // Use a request with the same anti-bot bypass options as the actual download
                     val req = YoutubeDLRequest(url).apply {
                         addOption("--user-agent", DownloadService.USER_AGENT)
-                        addOption("--extractor-args", "youtube:player_client=android,web_safari,mweb")
+                        // tv + web clients bypass GVS PO Token requirement (HTTP 403 on android client)
+                        addOption("--extractor-args", "youtube:player_client=tv,web")
                         addOption("--geo-bypass")
                         addOption("--no-playlist")
                     }
