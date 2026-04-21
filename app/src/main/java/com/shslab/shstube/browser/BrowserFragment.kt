@@ -105,6 +105,18 @@ class BrowserFragment : Fragment() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView?, req: WebResourceRequest?): WebResourceResponse? {
                 val url = req?.url?.toString() ?: return null
+
+                // CRITICAL: never block the MAIN document — that's the page the user is navigating to.
+                // Real browsers (Chrome, Brave, uBlock) only block sub-resources (ads, trackers, iframes).
+                // Without this guard, EasyList substring rules accidentally match `google.com`,
+                // `youtube.com`, etc. → entire homepage / search page renders blank.
+                val isMain = try { req.isForMainFrame } catch (_: Throwable) { false }
+                if (isMain) {
+                    val accept = req.requestHeaders["Accept"]
+                    MediaSniffer.reportNetworkResource(url, accept, view?.url)
+                    return null
+                }
+
                 val pageHost = try { Uri.parse(view?.url ?: "").host ?: "" } catch (_: Throwable) { "" }
                 if (!BrowserSettings.isWhitelisted(requireContext(), pageHost)) {
                     AdBlocker.maybeBlock(url)?.let { blocked -> return blocked }
