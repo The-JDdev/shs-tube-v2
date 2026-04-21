@@ -46,6 +46,10 @@ class DownloadService : Service() {
         private const val CHANNEL_NAME = "SHS Tube Downloads"
         private const val NOTIF_ID_BASE = 9100
 
+        const val USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/124.0.6367.179 Mobile Safari/537.36"
+
         /** rowId -> yt-dlp processId. Lets us kill a running download by row. */
         private val processIds = ConcurrentHashMap<Long, String>()
 
@@ -203,6 +207,11 @@ class DownloadService : Service() {
             addOption("--no-playlist")
             addOption("--no-mtime")
             addOption("--newline")
+            // YouTube anti-bot bypass — modern UA + multi-client extractor fallback.
+            // Without these YouTube returns "Sign in to confirm you're not a bot" / empty fmts.
+            addOption("--user-agent", USER_AGENT)
+            addOption("--extractor-args", "youtube:player_client=android,web_safari,mweb")
+            addOption("--geo-bypass")
             if (audioOnly) {
                 addOption("-f", formatId ?: "bestaudio/best")
                 addOption("-x")

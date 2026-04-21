@@ -28,18 +28,17 @@ class ShsTubeApp : Application() {
 
         @Volatile var ytDlpReady = false
         @Volatile var ytDlpInitError: String? = null
+        @Volatile var ytDlpUpdating = false
+        @Volatile var ytDlpVersion: String? = null
         @Volatile var newPipeReady = false
         @Volatile var torrentReady = false
 
         /**
          * Suspends until yt-dlp finishes its first-run binary extraction (or timeout).
          * Returns true if the engine is ready, false if init failed / timed out.
-         *
-         * If init has not been kicked off yet (or previously failed) we re-attempt it here.
          */
         suspend fun awaitYtDlpReady(timeoutMs: Long = 60_000L): Boolean {
             if (ytDlpReady) return true
-            // Re-attempt init in case it failed previously
             try {
                 YoutubeDL.getInstance().init(instance)
                 FFmpeg.getInstance().init(instance)
@@ -51,8 +50,6 @@ class ShsTubeApp : Application() {
                 ytDlpInitError = t.message
                 Log.w(TAG, "yt-dlp re-init in awaitYtDlpReady failed: ${t.message}")
             }
-
-            // Poll up to timeout in case background init is still in flight
             var elapsed = 0L
             val step = 250L
             while (elapsed < timeoutMs) {
@@ -71,10 +68,9 @@ class ShsTubeApp : Application() {
         try { CrashHandler.install(this) }
         catch (t: Throwable) { Log.e(TAG, "CrashHandler install failed", t) }
 
-        // 0.5 Boot the in-app developer log so every later catch can record stack traces
         try { DevLog.bootBanner() } catch (_: Throwable) {}
 
-        // 1. Room database — initialise the repository singleton
+        // 1. Room database
         try {
             DownloadRepository.init(this)
             DevLog.info("room", "database ready")
@@ -82,8 +78,7 @@ class ShsTubeApp : Application() {
             DevLog.error("room", t, extra = "Room init failed")
         }
 
-        // 2. NewPipe Extractor (cheap — sync init is fine)
-        //    With coreLibraryDesugaring enabled this no longer trips URLEncoder NoSuchMethodError
+        // 2. NewPipe Extractor (sync init)
         try {
             NewPipe.init(NewPipeDownloader.create(), Localization("en", "US"))
             newPipeReady = true
@@ -92,27 +87,51 @@ class ShsTubeApp : Application() {
             DevLog.error("newpipe", t, extra = "NewPipe init failed")
         }
 
-        // 3. Initialize yt-dlp (extracts Python runtime + yt-dlp + ffmpeg into app filesDir)
+        // 3. Initialize yt-dlp + FFmpeg, THEN auto-update yt-dlp to nightly so we keep up
+        //    with YouTube's anti-bot signature changes (the bundled binary goes stale every
+        //    few weeks). This is the #1 root cause of "search blank / no quality / dl fails".
         appScope.launch {
             try {
                 YoutubeDL.getInstance().init(this@ShsTubeApp)
                 FFmpeg.getInstance().init(this@ShsTubeApp)
                 ytDlpReady = true
                 ytDlpInitError = null
-                DevLog.info("yt-dlp", "engine + ffmpeg initialized")
+                try {
+                    ytDlpVersion = YoutubeDL.getInstance().version(this@ShsTubeApp)
+                } catch (_: Throwable) {}
+                DevLog.info("yt-dlp", "engine + ffmpeg initialized (binary v${ytDlpVersion ?: "?"})")
             } catch (t: Throwable) {
                 ytDlpInitError = t.message
                 DevLog.error("yt-dlp", t, extra = "init failed (will retry on demand)")
+                return@launch
+            }
+
+            // Fetch the latest yt-dlp binary over the network — uses the NIGHTLY channel
+            // so we get same-day fixes for YouTube's signature/PO-token changes.
+            ytDlpUpdating = true
+            try {
+                val status = YoutubeDL.getInstance().updateYoutubeDL(
+                    this@ShsTubeApp,
+                    YoutubeDL.UpdateChannel.NIGHTLY
+                )
+                try {
+                    ytDlpVersion = YoutubeDL.getInstance().version(this@ShsTubeApp)
+                } catch (_: Throwable) {}
+                DevLog.info("yt-dlp", "auto-update: $status (now v${ytDlpVersion ?: "?"})")
+            } catch (t: Throwable) {
+                DevLog.warn("yt-dlp", "auto-update failed (network?): ${t.message}")
+            } finally {
+                ytDlpUpdating = false
             }
         }
 
-        // 4. Download EasyList for the native ad-blocker
+        // 4. EasyList ad-blocker
         appScope.launch {
             try { AdBlocker.ensureRulesLoaded(this@ShsTubeApp) }
             catch (t: Throwable) { DevLog.error("adblock", t, extra = "EasyList load failed") }
         }
 
-        // 5. Boot the torrent engine (libtorrent4j session)
+        // 5. libtorrent4j session
         appScope.launch {
             try {
                 TorrentEngine.start(this@ShsTubeApp)

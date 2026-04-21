@@ -135,23 +135,26 @@ class DownloadsFragment : Fragment() {
     private fun updateEngineStatus() {
         val ytOk = ShsTubeApp.ytDlpReady
         val ytErr = ShsTubeApp.ytDlpInitError
+        val ytUpd = ShsTubeApp.ytDlpUpdating
+        val ytVer = ShsTubeApp.ytDlpVersion
         val npOk = ShsTubeApp.newPipeReady
         val tOk = ShsTubeApp.torrentReady
         val tErr = TorrentEngine.nativeError
 
-        val parts = listOf(
-            "yt-dlp" to (ytOk to ytErr),
-            "NewPipe" to (npOk to null),
-            "Torrent" to (tOk to tErr)
+        val ytSym = when {
+            ytUpd -> "↻ updating"
+            ytOk  -> "✓"
+            else  -> "…"
+        }
+        val verTag = if (ytVer != null) " v$ytVer" else ""
+
+        val line = "yt-dlp $ytSym$verTag   NewPipe " + (if (npOk) "✓" else "…") +
+            "   Torrent " + (if (tOk) "✓" else "…")
+
+        val errs = listOfNotNull(
+            if (!ytOk && !ytErr.isNullOrBlank()) "yt-dlp: ${ytErr.take(70)}" else null,
+            if (!tOk && !tErr.isNullOrBlank()) "Torrent: ${tErr.take(70)}" else null
         )
-        val line = parts.joinToString("  ") { (name, st) ->
-            val (ok, _) = st
-            "$name " + if (ok) "✓" else "…"
-        }
-        val errs = parts.mapNotNull { (name, st) ->
-            val (ok, err) = st
-            if (!ok && !err.isNullOrBlank()) "$name: ${err.take(60)}" else null
-        }
         statusView?.text = if (errs.isEmpty()) line else line + "\n" + errs.joinToString("\n")
     }
 }

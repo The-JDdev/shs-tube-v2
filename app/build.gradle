@@ -12,8 +12,8 @@ android {
         applicationId "com.shslab.shstube"
         minSdk 24
         targetSdk 34
-        versionCode 29
-        versionName "2.2.5-killswitch"
+        versionCode 30
+        versionName "2.2.6-ytdlp-autoupdate"
         vectorDrawables.useSupportLibrary = true
 
         // Universal APK — ship every ABI

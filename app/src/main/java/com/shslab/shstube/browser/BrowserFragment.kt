@@ -160,7 +160,11 @@ class BrowserFragment : Fragment() {
         }
 
         MediaSniffer.addListener(sniffListener)
-        loadUrl(BrowserSettings.engine(requireContext()).template.removeSuffix("?q=") + "?q=")
+        // Open the search engine homepage on first load, NOT a stub empty-query URL
+        // (the previous "?q=" suffix made it look like the browser was broken).
+        val home = BrowserSettings.engine(requireContext()).template
+            .removeSuffix("?q=").removeSuffix("/search")
+        loadUrl(home.ifBlank { "https://www.google.com" })
         return v
     }
 

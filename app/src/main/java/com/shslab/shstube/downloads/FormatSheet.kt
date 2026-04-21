@@ -17,7 +17,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.shslab.shstube.R
 import com.shslab.shstube.ShsTubeApp
 import com.shslab.shstube.service.DownloadService
+import com.shslab.shstube.service.DownloadService.Companion.USER_AGENT
 import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -83,7 +85,16 @@ class FormatSheet : BottomSheetDialogFragment() {
                 ShsTubeApp.awaitYtDlpReady(timeoutMs = 60_000)
             }
             try {
-                val info = withContext(Dispatchers.IO) { YoutubeDL.getInstance().getInfo(url) }
+                val info = withContext(Dispatchers.IO) {
+                    // Use a request with the same anti-bot bypass options as the actual download
+                    val req = YoutubeDLRequest(url).apply {
+                        addOption("--user-agent", DownloadService.USER_AGENT)
+                        addOption("--extractor-args", "youtube:player_client=android,web_safari,mweb")
+                        addOption("--geo-bypass")
+                        addOption("--no-playlist")
+                    }
+                    YoutubeDL.getInstance().getInfo(req)
+                }
                 val list = info.formats ?: emptyList()
                 val rows = list.mapNotNull { f -> toRow(f) }
                     .sortedByDescending { row -> row.score }
