@@ -12,8 +12,8 @@ android {
         applicationId "com.shslab.shstube"
         minSdk 24
         targetSdk 34
-        versionCode 35
-        versionName "2.3.1-buildfix"
+        versionCode 36
+        versionName "2.3.2-fixes"
         vectorDrawables.useSupportLibrary = true
 
         // Universal APK — ship every ABI
@@ -91,6 +91,8 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'androidx.webkit:webkit:1.10.0'
     implementation 'androidx.documentfile:documentfile:1.0.1'
+    // Thumbnail image loading — async, cached, no setup needed
+    implementation 'io.coil-kt:coil:2.6.0'
 
     // Room — persistent download history (SQLite)
     implementation 'androidx.room:room-runtime:2.6.1'

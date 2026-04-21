@@ -41,6 +41,15 @@ class BrowserFragment : Fragment() {
     private lateinit var downloadIcon: ImageButton
     private lateinit var downloadBadge: TextView
 
+    /**
+     * THREAD-SAFETY: shouldInterceptRequest runs on a background thread (ThreadPoolForeg).
+     * WebView.getUrl() is NOT thread-safe — calling view.url from that thread causes:
+     *   "A WebView method was called on thread 'ThreadPoolForeg'"
+     * Cache the current page URL here, updated only from the main thread via WebViewClient
+     * callbacks (onPageStarted / onPageFinished), and read it from the background thread safely.
+     */
+    @Volatile private var currentPageUrl: String = ""
+
     private val sniffListener: (MediaSniffer.SniffedMedia) -> Unit = { _ ->
         view?.post { updateBadge() }
     }
@@ -103,6 +112,13 @@ class BrowserFragment : Fragment() {
         }
 
         webView.webViewClient = object : WebViewClient() {
+
+            // Called on MAIN thread — safe to update currentPageUrl here
+            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                super.onPageStarted(view, url, favicon)
+                currentPageUrl = url ?: ""
+            }
+
             override fun shouldInterceptRequest(view: WebView?, req: WebResourceRequest?): WebResourceResponse? {
                 val url = req?.url?.toString() ?: return null
 
@@ -112,20 +128,19 @@ class BrowserFragment : Fragment() {
                 // `youtube.com`, etc. → entire homepage / search page renders blank.
                 val isMain = try { req.isForMainFrame } catch (_: Throwable) { false }
                 if (isMain) {
-                    val accept = req.requestHeaders["Accept"]
-                    MediaSniffer.reportNetworkResource(url, accept, view?.url)
+                    // Use req.url.toString() — req is thread-safe; never use view.url here (wrong thread)
+                    MediaSniffer.reportNetworkResource(url, req.requestHeaders["Accept"], currentPageUrl)
                     return null
                 }
 
-                val pageHost = try { Uri.parse(view?.url ?: "").host ?: "" } catch (_: Throwable) { "" }
+                // Use cached currentPageUrl — set on the main thread, volatile-read here safely.
+                val pageHost = try { Uri.parse(currentPageUrl).host ?: "" } catch (_: Throwable) { "" }
                 val reqHost  = try { Uri.parse(url).host ?: "" } catch (_: Throwable) { "" }
 
-                // EXTRA LENIENCY: during the very-first-load window the WebView hasn't
-                // committed `view.url` yet, so we'd treat every sub-resource as third-party
-                // and possibly block critical assets. Skip ad-blocker if pageHost is unknown.
+                // EXTRA LENIENCY: during the very-first-load window currentPageUrl may be blank
+                // (before onPageStarted fires). Skip ad-blocker — we can't determine first/third party.
                 if (pageHost.isBlank()) {
-                    val accept = req.requestHeaders["Accept"]
-                    MediaSniffer.reportNetworkResource(url, accept, view?.url)
+                    MediaSniffer.reportNetworkResource(url, req.requestHeaders["Accept"], currentPageUrl)
                     return null
                 }
 
@@ -137,8 +152,7 @@ class BrowserFragment : Fragment() {
                 if (!isFirstParty && !BrowserSettings.isWhitelisted(requireContext(), pageHost)) {
                     AdBlocker.maybeBlock(url)?.let { blocked -> return blocked }
                 }
-                val accept = req.requestHeaders["Accept"]
-                MediaSniffer.reportNetworkResource(url, accept, view?.url)
+                MediaSniffer.reportNetworkResource(url, req.requestHeaders["Accept"], currentPageUrl)
                 return null
             }
 
@@ -158,6 +172,7 @@ class BrowserFragment : Fragment() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
+                currentPageUrl = url ?: currentPageUrl   // keep last known URL if null
                 urlBar.setText(url)
                 MediaSniffer.inject(webView)
                 updateBadge()

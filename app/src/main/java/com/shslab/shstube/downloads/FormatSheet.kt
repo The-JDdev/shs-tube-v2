@@ -90,7 +90,8 @@ class FormatSheet : BottomSheetDialogFragment() {
                     val req = YoutubeDLRequest(url).apply {
                         addOption("--user-agent", DownloadService.USER_AGENT)
                         // tv + web clients bypass GVS PO Token requirement (HTTP 403 on android client)
-                        addOption("--extractor-args", "youtube:player_client=tv,web")
+                        // ios client bypasses PO Token + DRM checks; web as fallback for formats
+                        addOption("--extractor-args", "youtube:player_client=ios,web")
                         addOption("--geo-bypass")
                         addOption("--no-playlist")
                     }

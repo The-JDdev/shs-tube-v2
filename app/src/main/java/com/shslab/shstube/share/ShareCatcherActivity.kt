@@ -28,6 +28,13 @@ class ShareCatcherActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Belt-and-suspenders window transparency — the XML theme handles most of it,
+        // but setting these programmatically guarantees no background flash on any OEM skin.
+        try {
+            window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(0))
+            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        } catch (_: Throwable) {}
         // Translucent theme — no setContentView needed
         val url = extractUrl(intent)
         if (url.isNullOrBlank()) {

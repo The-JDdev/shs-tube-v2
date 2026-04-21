@@ -259,7 +259,7 @@
 
         <TextView android:id="@+id/version_label"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="SHS Tube  v2.3.1-buildfix"
+            android:text="SHS Tube  v2.3.2-fixes"
             android:textColor="@color/text_muted" android:textSize="12sp" />
 
         <TextView

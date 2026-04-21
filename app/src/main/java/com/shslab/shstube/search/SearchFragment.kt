@@ -167,13 +167,21 @@ class SearchFragment : Fragment() {
                 val items = extractor.initialPage.items
                 for (item in items.take(50)) {
                     when (item) {
-                        is StreamInfoItem -> hits += SearchHit(
-                            kind = HitKind.Video,
-                            title = item.name ?: "(no title)",
-                            url = item.url ?: "",
-                            uploader = item.uploaderName ?: "",
-                            duration = formatDuration(item.duration)
-                        )
+                        is StreamInfoItem -> {
+                            val rawUrl = item.url ?: ""
+                            // Derive thumbnail from YouTube video ID — works for any YT URL,
+                            // sidesteps NewPipe's thumbnailUrl API which changed across versions.
+                            val ytId = Regex("[?&]v=([A-Za-z0-9_-]{11})").find(rawUrl)?.groupValues?.getOrNull(1) ?: ""
+                            val thumb = if (ytId.isNotEmpty()) "https://i.ytimg.com/vi/$ytId/hqdefault.jpg" else ""
+                            hits += SearchHit(
+                                kind = HitKind.Video,
+                                title = item.name ?: "(no title)",
+                                url = rawUrl,
+                                uploader = item.uploaderName ?: "",
+                                duration = formatDuration(item.duration),
+                                thumbnailUrl = thumb
+                            )
+                        }
                         is ChannelInfoItem -> hits += SearchHit(
                             kind = HitKind.Channel,
                             title = item.name ?: "(channel)",
@@ -211,13 +219,20 @@ class SearchFragment : Fragment() {
                     val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
                     val entries = info.entries ?: emptyList()
                     for (e in entries.take(50)) {
-                        val u = e.url ?: e.webpageUrl ?: continue
+                        val rawU = e.url ?: e.webpageUrl ?: continue
+                        val absUrl = if (rawU.startsWith("http")) rawU else "https://www.youtube.com/watch?v=$rawU"
+                        // Prefer yt-dlp thumbnail field; fall back to ytimg CDN from video ID
+                        val thumbUrl = e.thumbnail?.takeIf { t -> t.startsWith("http") }
+                            ?: Regex("[?&]v=([A-Za-z0-9_-]{11})").find(absUrl)?.groupValues?.getOrNull(1)
+                                ?.let { vid -> "https://i.ytimg.com/vi/$vid/hqdefault.jpg" }
+                            ?: ""
                         hits += SearchHit(
                             kind = HitKind.Video,
                             title = e.title ?: "(no title)",
-                            url = if (u.startsWith("http")) u else "https://www.youtube.com/watch?v=$u",
+                            url = absUrl,
                             uploader = e.uploader ?: "",
-                            duration = formatDuration(e.duration?.toLong() ?: 0L)
+                            duration = formatDuration(e.duration?.toLong() ?: 0L),
+                            thumbnailUrl = thumbUrl
                         )
                     }
                     if (hits.isNotEmpty()) errMsg = null
@@ -259,5 +274,6 @@ data class SearchHit(
     val title: String,
     val url: String,
     val uploader: String,
-    val duration: String
+    val duration: String,
+    val thumbnailUrl: String = ""
 )

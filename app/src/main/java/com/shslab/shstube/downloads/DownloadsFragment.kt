@@ -1,6 +1,7 @@
 package com.shslab.shstube.downloads
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -15,6 +16,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,6 +27,8 @@ import com.shslab.shstube.data.DownloadEntity
 import com.shslab.shstube.data.DownloadRepository
 import com.shslab.shstube.service.DownloadService
 import com.shslab.shstube.torrent.TorrentEngine
+import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * Live download dashboard backed by Room. Items survive app death / reboot.
@@ -247,9 +251,102 @@ private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
             Toast.makeText(ctx, "Cancelling…", Toast.LENGTH_SHORT).show()
         }
 
+        // Long-press → context action menu (Rename / Share / Delete file / Remove from history / Cancel)
         h.itemView.setOnLongClickListener {
-            DownloadRepository.deleteAsync(item.id)
-            Toast.makeText(h.itemView.context, "Removed from history", Toast.LENGTH_SHORT).show()
+            val ctx = h.itemView.context
+            val isCompleted = item.status == "completed"
+            val isActive = item.status in listOf("downloading", "queued", "initializing")
+            val hasFile = !item.localPath.isNullOrBlank() && File(item.localPath).exists()
+
+            val options = mutableListOf<String>()
+            if (isActive) options += "✕  Cancel download"
+            if (isCompleted && hasFile) options += "▶  Play"
+            if (isCompleted && hasFile) options += "↑  Share file"
+            if (isCompleted && hasFile) options += "✏  Rename file"
+            if (isCompleted && hasFile) options += "🗑  Delete file + history"
+            options += "✖  Remove from history"
+
+            AlertDialog.Builder(ctx)
+                .setTitle(item.title.ifBlank { "Options" }.take(60))
+                .setItems(options.toTypedArray()) { _, which ->
+                    when (options[which]) {
+                        "✕  Cancel download" -> {
+                            DownloadService.cancel(ctx, item.id)
+                            Toast.makeText(ctx, "Cancelling…", Toast.LENGTH_SHORT).show()
+                        }
+                        "▶  Play" -> {
+                            val intent = Intent(ctx, com.shslab.shstube.player.PlayerActivity::class.java).apply {
+                                putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_URL, "file://${item.localPath}")
+                                putExtra(com.shslab.shstube.player.PlayerActivity.EXTRA_TITLE, item.title)
+                            }
+                            ctx.startActivity(intent)
+                        }
+                        "↑  Share file" -> {
+                            try {
+                                val file = File(item.localPath!!)
+                                val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.fileprovider", file)
+                                val mime = item.mime.takeIf { it.isNotBlank() } ?: "video/*"
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = mime
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                ctx.startActivity(Intent.createChooser(shareIntent, "Share via"))
+                            } catch (t: Throwable) {
+                                Toast.makeText(ctx, "Share failed: ${t.message?.take(60)}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        "✏  Rename file" -> {
+                            val input = EditText(ctx).apply {
+                                val oldFile = File(item.localPath!!)
+                                setText(oldFile.nameWithoutExtension)
+                                selectAll()
+                            }
+                            AlertDialog.Builder(ctx)
+                                .setTitle("Rename file")
+                                .setView(input)
+                                .setPositiveButton("Rename") { _, _ ->
+                                    val newName = input.text.toString().trim()
+                                    if (newName.isBlank()) return@setPositiveButton
+                                    try {
+                                        val oldFile = File(item.localPath!!)
+                                        val newFile = File(oldFile.parent, newName + "." + oldFile.extension)
+                                        if (oldFile.renameTo(newFile)) {
+                                            ShsTubeApp.appScope.launch {
+                                                try {
+                                                    DownloadRepository.markCompleted(item.id, "completed", newFile.absolutePath)
+                                                } catch (_: Throwable) {}
+                                            }
+                                            Toast.makeText(ctx, "Renamed to $newName", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(ctx, "Rename failed", Toast.LENGTH_SHORT).show()
+                                        }
+                                    } catch (t: Throwable) {
+                                        Toast.makeText(ctx, "Error: ${t.message?.take(60)}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                        }
+                        "🗑  Delete file + history" -> {
+                            AlertDialog.Builder(ctx)
+                                .setTitle("Delete permanently?")
+                                .setMessage("This will delete the file from storage and remove it from history.")
+                                .setPositiveButton("Delete") { _, _ ->
+                                    try { item.localPath?.let { File(it).delete() } } catch (_: Throwable) {}
+                                    DownloadRepository.deleteAsync(item.id)
+                                    Toast.makeText(ctx, "Deleted", Toast.LENGTH_SHORT).show()
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                        }
+                        "✖  Remove from history" -> {
+                            DownloadRepository.deleteAsync(item.id)
+                            Toast.makeText(ctx, "Removed from history", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .show()
             true
         }
     }
