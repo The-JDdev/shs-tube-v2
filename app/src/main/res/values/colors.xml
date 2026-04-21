@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="brand_orange">#FF5722</color>
-    <color name="brand_orange_dark">#E64A19</color>
-    <color name="brand_blue">#1565C0</color>
-    <color name="brand_accent">#FFB300</color>
-    <color name="bg_primary">#0F1115</color>
-    <color name="bg_surface">#1A1D23</color>
-    <color name="bg_elevated">#252932</color>
+    <!-- Netflix-style dark palette — pure-black canvas + signature red + warm gold accents -->
+    <color name="brand_orange">#E50914</color>      <!-- Netflix Red (primary action) -->
+    <color name="brand_orange_dark">#B0060F</color> <!-- Hover/pressed -->
+    <color name="brand_blue">#0072F5</color>        <!-- Tertiary (links, info) -->
+    <color name="brand_accent">#F5C518</color>      <!-- IMDb-style gold accent -->
+    <color name="bg_primary">#0A0A0A</color>        <!-- Pure near-black canvas -->
+    <color name="bg_surface">#171717</color>        <!-- Cards / sheets -->
+    <color name="bg_elevated">#222222</color>       <!-- Elevated chips / highlight rows -->
+    <color name="selection_overlay">#33E50914</color> <!-- 20% red tint for multi-select -->
+    <color name="glass_overlay">#1AFFFFFF</color>   <!-- 10% white frost (glassmorphism) -->
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B0B5BD</color>
     <color name="text_muted">#6B7280</color>

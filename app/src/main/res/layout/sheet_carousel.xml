@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/bg_surface"
+    android:padding="18dp">
+
+    <!-- Drag handle -->
+    <View android:layout_width="44dp" android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/divider"
+        android:layout_marginBottom="14dp" />
+
+    <TextView android:id="@+id/carousel_title"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Multi-item post detected"
+        android:textSize="18sp" android:textStyle="bold"
+        android:textColor="@color/text_primary" />
+
+    <TextView android:id="@+id/carousel_subtitle"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@color/text_muted"
+        android:layout_marginTop="2dp" />
+
+    <View android:layout_width="match_parent" android:layout_height="1dp"
+        android:background="@color/divider" android:layout_marginVertical="12dp" />
+
+    <!-- Select All toggle -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:padding="6dp">
+
+        <CheckBox android:id="@+id/cb_select_all"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Select all"
+            android:textColor="@color/text_primary"
+            android:buttonTint="@color/brand_orange"
+            android:checked="true" />
+
+        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+
+        <TextView android:id="@+id/selection_count"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="@color/brand_accent" android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_carousel"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:minHeight="120dp"
+        android:maxHeight="380dp"
+        android:layout_marginTop="6dp"
+        android:scrollbars="vertical" />
+
+    <com.google.android.material.button.MaterialButton android:id="@+id/btn_download_selected"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Download selected"
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        app:backgroundTint="@color/brand_orange"
+        android:textColor="@color/white"
+        android:layout_marginTop="14dp" />
+</LinearLayout>

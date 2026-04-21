@@ -142,5 +142,9 @@ class ShsTubeApp : Application() {
                 DevLog.error("torrent", t, extra = "engine boot failed")
             }
         }
+
+        // 6. Network auto-resume — when connectivity returns, retry failed downloads
+        try { com.shslab.shstube.util.NetworkAutoResume.install(this) }
+        catch (t: Throwable) { DevLog.warn("network", "auto-resume not installed: ${t.message}") }
     }
 }

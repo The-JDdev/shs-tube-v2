@@ -25,13 +25,24 @@
         <item name="bottomSheetDialogTheme">@style/ThemeOverlay.ShsTube.BottomSheet</item>
     </style>
 
-    <!-- Translucent theme for the Snaptube-style ShareCatcherActivity -->
+    <!-- BULLETPROOF Snaptube-style translucent overlay theme.
+         The previous activity background MUST stay visible; we only show our BottomSheet.
+         Defensive: every attribute that could possibly paint a background is forced to
+         transparent / disabled. backgroundDim is OFF so the user's previous app remains
+         clearly visible behind our sheet (Snaptube does the same). -->
     <style name="Theme.ShsTube.Translucent" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="colorSurface">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowIsFloating">false</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowAnimationStyle">@android:style/Animation</item>
-        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@null</item>
         <item name="bottomSheetDialogTheme">@style/ThemeOverlay.ShsTube.BottomSheet</item>
     </style>
 

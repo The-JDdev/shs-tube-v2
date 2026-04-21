@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
+import kotlinx.coroutines.launch
 import com.shslab.shstube.R
 import com.shslab.shstube.data.StoragePrefs
 
@@ -69,6 +70,27 @@ class AboutFragment : Fragment() {
                 startActivity(Intent(requireContext(), com.shslab.shstube.devlog.DevLogActivity::class.java))
             } catch (t: Throwable) {
                 Toast.makeText(requireContext(), "Cannot open log viewer: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // JUNK CLEANER — runs the sweep on a background thread and reports back
+        v.findViewById<MaterialButton>(R.id.btn_junk_clean).setOnClickListener { btn ->
+            btn.isEnabled = false
+            (btn as MaterialButton).text = "Cleaning…"
+            com.shslab.shstube.ShsTubeApp.appScope.launch {
+                val ctx = requireContext().applicationContext
+                val result = try { com.shslab.shstube.util.JunkCleaner.clean(ctx) }
+                catch (t: Throwable) { com.shslab.shstube.util.JunkCleaner.Result(0, 0, 1) }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    btn.isEnabled = true
+                    btn.text = "Clean junk now"
+                    val msg = if (result.filesDeleted == 0)
+                        "Already clean — no junk found"
+                    else
+                        "Freed ${com.shslab.shstube.util.JunkCleaner.humanReadable(result.bytesFreed)} • " +
+                            "${result.filesDeleted} file(s) deleted"
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                }
             }
         }
 

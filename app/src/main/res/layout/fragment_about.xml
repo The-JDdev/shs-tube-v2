@@ -228,9 +228,38 @@
         <View android:layout_width="match_parent" android:layout_height="1dp"
             android:background="@color/divider" android:layout_marginVertical="22dp" />
 
+        <!-- JUNK CLEANER — wipes .part / .ytdl / .tmp / DASH fragments / yt-dlp pycache -->
         <TextView
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="SHS Tube  v2.2.3-storagefix"
+            android:text="STORAGE CLEANUP"
+            android:textColor="@color/text_secondary" android:textSize="12sp"
+            android:textStyle="bold" android:letterSpacing="0.15"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Sweep partial downloads, broken segment files, and engine caches across cache + private storage + Downloads/SHSTube. One tap, one click, free space back."
+            android:textColor="@color/text_muted" android:textSize="11sp"
+            android:gravity="center"
+            android:layout_marginBottom="10dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_junk_clean"
+            style="@style/Widget.Material3.Button.Icon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clean junk now"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            app:backgroundTint="@color/brand_orange"
+            android:textColor="@color/white" />
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="@color/divider" android:layout_marginVertical="22dp" />
+
+        <TextView android:id="@+id/version_label"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="SHS Tube  v2.3.0-snaptube"
             android:textColor="@color/text_muted" android:textSize="12sp" />
 
         <TextView

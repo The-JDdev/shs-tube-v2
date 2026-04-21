@@ -120,9 +120,18 @@ class BrowserFragment : Fragment() {
                 val pageHost = try { Uri.parse(view?.url ?: "").host ?: "" } catch (_: Throwable) { "" }
                 val reqHost  = try { Uri.parse(url).host ?: "" } catch (_: Throwable) { "" }
 
+                // EXTRA LENIENCY: during the very-first-load window the WebView hasn't
+                // committed `view.url` yet, so we'd treat every sub-resource as third-party
+                // and possibly block critical assets. Skip ad-blocker if pageHost is unknown.
+                if (pageHost.isBlank()) {
+                    val accept = req.requestHeaders["Accept"]
+                    MediaSniffer.reportNetworkResource(url, accept, view?.url)
+                    return null
+                }
+
                 // Allow all FIRST-PARTY sub-resources (same registered domain). EasyList rules
                 // for tracker subdomains of the host site itself would otherwise wreck pages.
-                val isFirstParty = reqHost.isNotEmpty() && pageHost.isNotEmpty() &&
+                val isFirstParty = reqHost.isNotEmpty() &&
                     (reqHost == pageHost || reqHost.endsWith(".$pageHost") || pageHost.endsWith(".$reqHost"))
 
                 if (!isFirstParty && !BrowserSettings.isWhitelisted(requireContext(), pageHost)) {
@@ -131,6 +140,20 @@ class BrowserFragment : Fragment() {
                 val accept = req.requestHeaders["Accept"]
                 MediaSniffer.reportNetworkResource(url, accept, view?.url)
                 return null
+            }
+
+            override fun onReceivedError(
+                view: WebView?, request: WebResourceRequest?,
+                error: android.webkit.WebResourceError?
+            ) {
+                super.onReceivedError(view, request, error)
+                // Surface load failures to DevLog so we never have a silent blank screen again
+                if (request?.isForMainFrame == true) {
+                    com.shslab.shstube.util.DevLog.warn(
+                        "browser",
+                        "main-frame error ${error?.errorCode} ${error?.description} url=${request.url}"
+                    )
+                }
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -144,6 +167,37 @@ class BrowserFragment : Fragment() {
         // File downloads triggered by the page (e.g. <a download>) → format sheet
         webView.setDownloadListener { dlUrl, _, _, _, _ ->
             (activity as? MainActivity)?.showFormatSheet(dlUrl, "Page download")
+        }
+
+        // LONG-PRESS DOWNLOAD — Snaptube-style: hold any image/video/link → download menu.
+        // WebView.HitTestResult tells us what's under the touch point.
+        webView.setOnLongClickListener {
+            val ht = webView.hitTestResult
+            val target: String? = when (ht.type) {
+                WebView.HitTestResult.IMAGE_TYPE,
+                WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE -> ht.extra
+                WebView.HitTestResult.SRC_ANCHOR_TYPE -> ht.extra
+                WebView.HitTestResult.ANCHOR_TYPE -> ht.extra
+                else -> null
+            }
+            if (target.isNullOrBlank()) return@setOnLongClickListener false
+            val items = arrayOf("Download this", "Open in new tab", "Copy link")
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle(target.take(80))
+                .setItems(items) { _, which ->
+                    when (which) {
+                        0 -> (activity as? MainActivity)?.showFormatSheet(target, "Long-press download")
+                        1 -> webView.loadUrl(target)
+                        2 -> {
+                            val cm = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                                as android.content.ClipboardManager
+                            cm.setPrimaryClip(android.content.ClipData.newPlainText("link", target))
+                            Toast.makeText(requireContext(), "Link copied", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                .show()
+            true
         }
 
         urlBar.setOnEditorActionListener { _, _, _ ->

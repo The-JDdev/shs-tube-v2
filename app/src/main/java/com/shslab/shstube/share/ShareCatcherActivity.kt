@@ -43,8 +43,73 @@ class ShareCatcherActivity : FragmentActivity() {
             return
         }
 
-        // Everything else (YouTube, FB, IG, TikTok, Twitter, …) → format picker sheet
-        showShareSheet(url)
+        // Everything else — first probe for a multi-item carousel/playlist via yt-dlp
+        // --flat-playlist (cheap, ~1-2s). If we get >1 entries, show the Carousel sheet
+        // for selective batch download. Otherwise fall through to the regular format picker.
+        ShsTubeApp.appScope.launch {
+            val multi = withContext(Dispatchers.IO) { detectMultiEntries(url) }
+            withContext(Dispatchers.Main) {
+                if (multi != null && multi.urls.size > 1) {
+                    showCarouselSheet(multi)
+                } else {
+                    showShareSheet(url)
+                }
+            }
+        }
+    }
+
+    private data class Multi(val sourceTitle: String, val urls: List<String>, val titles: List<String>, val metas: List<String>)
+
+    /**
+     * Quick yt-dlp probe — `--flat-playlist --dump-single-json` returns either a single video
+     * JSON (no entries) or a playlist/carousel with entries[]. We only build a Multi when
+     * entries.size > 1 so single videos take the fast path.
+     */
+    private fun detectMultiEntries(url: String): Multi? {
+        if (!ShsTubeApp.ytDlpReady) return null
+        return try {
+            val req = com.yausername.youtubedl_android.YoutubeDLRequest(url).apply {
+                addOption("--flat-playlist")
+                addOption("--skip-download")
+                addOption("--no-warnings")
+                addOption("--extractor-args", "youtube:player_client=tv,web")
+            }
+            val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
+            val entries = info.entries ?: return null
+            if (entries.size <= 1) return null
+            val urls = mutableListOf<String>()
+            val titles = mutableListOf<String>()
+            val metas = mutableListOf<String>()
+            for (e in entries.take(50)) {
+                val u = e.url ?: e.webpageUrl ?: continue
+                val abs = if (u.startsWith("http")) u else "https://www.youtube.com/watch?v=$u"
+                urls += abs
+                titles += (e.title ?: "")
+                val durStr = e.duration?.toLong()?.takeIf { it > 0 }?.let { d ->
+                    val m = d / 60; val s = d % 60; "%d:%02d".format(m, s)
+                }.orEmpty()
+                val upl = e.uploader.orEmpty()
+                metas += listOf(durStr, upl).filter { it.isNotBlank() }.joinToString(" • ")
+            }
+            if (urls.size <= 1) null
+            else Multi(info.title.orEmpty(), urls, titles, metas)
+        } catch (t: Throwable) {
+            com.shslab.shstube.util.DevLog.warn("share", "detectMultiEntries failed: ${t.message?.take(80)}")
+            null
+        }
+    }
+
+    private fun showCarouselSheet(m: Multi) {
+        try {
+            val sheet = CarouselSheetFragment.newInstance(m.sourceTitle, m.urls, m.titles, m.metas)
+            sheet.show(supportFragmentManager, "carousel_sheet")
+        } catch (t: Throwable) {
+            com.shslab.shstube.util.DevLog.error("share", t, extra = "Carousel show failed")
+            Toast.makeText(this, "Carousel sheet failed — falling back", Toast.LENGTH_SHORT).show()
+            // Last resort: just route the original URL
+            try { com.shslab.shstube.downloads.SmartDownloadRouter.route(this, m.urls.first()) } catch (_: Throwable) {}
+            finish()
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
