@@ -12,8 +12,8 @@ android {
         applicationId "com.shslab.shstube"
         minSdk 24
         targetSdk 34
-        versionCode 34
-        versionName "2.3.0-snaptube"
+        versionCode 35
+        versionName "2.3.1-buildfix"
         vectorDrawables.useSupportLibrary = true
 
         // Universal APK — ship every ABI

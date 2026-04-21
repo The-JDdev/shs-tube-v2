@@ -7,7 +7,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import com.shslab.shstube.ShsTubeApp
 import com.shslab.shstube.data.DownloadRepository
-import com.shslab.shstube.downloads.SmartDownloadRouter
+import com.shslab.shstube.service.DownloadService
 import kotlinx.coroutines.launch
 
 /**
@@ -63,7 +63,15 @@ object NetworkAutoResume {
                 for (row in candidates) {
                     try {
                         DownloadRepository.deleteAsync(row.id)   // clear stale failed row
-                        SmartDownloadRouter.route(ctx, row.url)  // re-queue fresh
+                        // Re-queue directly through DownloadService — Context-based, no Activity needed.
+                        // formatId=null + audioOnly=false → yt-dlp picks bestvideo+bestaudio/best.
+                        DownloadService.enqueue(
+                            ctx = ctx,
+                            url = row.url,
+                            title = row.title.ifBlank { row.url },
+                            formatId = null,
+                            audioOnly = false
+                        )
                     } catch (_: Throwable) {}
                 }
             } catch (t: Throwable) {
