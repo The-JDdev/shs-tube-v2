@@ -1,0 +1,69 @@
+- name: Attack and Push
+        env:
+          OPENAI_API_BASE: "https://api.souimagery.fun/v1"
+          OPENAI_API_KEY: ${{ sk-seTdDRtLCTlek7okAs7P1zAyu0tNAiaOZj2navb7S0QzhNRC }}
+        run: |
+          git config --global user.name "JD-AI-Bot"
+          git config --global user.email "bot@jd.com"
+          
+          # Writing the master prompt to a file safely
+          cat << 'EOF' > instruction.txt
+          [CRITICAL SYSTEM OVERRIDE: YOU ARE THE NEW LEAD ARCHITECT]
+
+          Suno dhyan se. Maine app ko real Android device pe test kiya hai aur purane developer ne bohot saari critical problems aur silly syntax errors chhod di hain. Mujhe tumse 100% working, modern, aur bug-free code chahiye. Code likhne se pehle apna logic review karna, aur likhne ke baad wapas double-check karna ki koi Kotlin syntax error ya thread crash na ho. 
+
+          Project Context:
+          - GitHub Repository: The-JDdev/shs-tube-v2
+          - App Type: A Next-Gen Media & Torrent Downloader (Like SnapTube/Netflix hybrid).
+
+          IMMEDIATE ACTION REQUIRED - FIX & IMPLEMENT THESE 10 PILLARS:
+
+          1. BROWSER DEAD & THREAD CRASH (Fix immediately):
+             - The Browser is blank. The AdBlocker is stupidly blocking the main webpage (e.g., google.com). Fix shouldInterceptRequest to allow the main frame.
+             - There is a Fatal Exception: A WebView method was called on thread 'ThreadPoolForeg'. Ensure methods like view.url or UI updates inside the WebViewClient are called strictly on the Main UI Thread, or use request.url.toString() safely.
+             - Add a "Long-press to download" feature inside the browser for images/videos.
+
+          2. TRUE SNAPTUBE OVERLAY (No App UI on Share):
+             - Currently, sharing a link from Facebook/YouTube opens the whole app. I DO NOT WANT THIS.
+             - When a link is shared, ONLY a transparent BottomSheet/Popup should appear over the current app. Use Theme.Translucent.NoTitleBar, excludeFromRecents="true", and a transparent background. 
+
+          3. YOUTUBE SEARCH & FORMAT FETCHING (The Engine Bypass):
+             - Search results must show Thumbnails perfectly.
+             - When I click a search result or paste a YouTube link, the popup only shows "best" or "audio only". This is WRONG. 
+             - You MUST wire yt-dlp to fetch ALL available qualities (1080p, 4K, 720p, etc.). Use --extractor-args "youtube:player_client=ios,web" to bypass YouTube's PO Token and DRM blocks.
+
+          4. TORRENT DEAD ZONE (Magnet & Links):
+             - Magnet links work, but .torrent files or direct torrent URLs fail to download. 
+             - If libtorrent4j is broken or slow, REPLACE it entirely with a better, unlimited, free, and ultra-fast torrent engine (like TorrentStream or optimized jlibtorrent). Torrents must fly.
+
+          5. CAROUSEL/PLAYLIST MULTI-DOWNLOAD (Instagram/Web):
+             - If I share an Instagram post with multiple photos/videos, or a website playlist, the app must show a SnapTube-style selection UI. Ask me: "Download All", or let me check/uncheck specific items (1, 2, 3) before downloading.
+
+          6. ADVANCED FILE MANAGER:
+             - In the Downloads section, I need Multi-select. I must be able to select multiple running or finished files to CANCEL, DELETE, or SHARE them together.
+             - Add a "Rename" option for downloaded files. 
+
+          7. STORAGE JUNK CLEANER:
+             - Build a powerful "Junk Cleaner" button. One click should scan and delete all temporary files, cache, .part files, and yt-dlp leftovers to free up phone storage.
+
+          8. DIRECT WEB SHARE TO APP:
+             - Sharing a random website video link should either instantly pop up the download sheet, OR open the in-app browser automatically detecting the media.
+
+          9. NETFLIX-STYLE PREMIUM UI:
+             - The current UI is boring and shows stupid backend logs like "No API needed". REMOVE that text. Users don't care about APIs. 
+             - Upgrade the entire app to a sleek, modern, Material 3, Dark "Netflix-style" UI with glassmorphism and smooth animations.
+
+          10. NO SILLY SYNTAX ERRORS:
+             - The previous AI failed builds with unresolved entries, startsWith ambiguity, and it lambda scope errors. DO NOT repeat this. Write flawless Kotlin.
+
+          Review the repository, understand the architecture, and push the perfect commits to GitHub. Confirm when you are done.
+          EOF
+          
+          # Unleashing Claude Opus on the repo using the instruction file
+          aider --model claude-opus-4-7 --yes --message-file instruction.txt
+          
+          # Clean up and force push
+          rm instruction.txt
+          git add .
+          git commit -m "Auto-Architecture Update: 10 Pillars Implemented by AI" || echo "No changes to commit"
+          git push
