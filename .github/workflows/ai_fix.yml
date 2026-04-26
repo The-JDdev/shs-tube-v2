@@ -20,7 +20,7 @@ jobs:
       - name: AI Auto Fix
         env:
           OPENAI_API_BASE: "https://api.souimagery.fun/v1"
-          OPENAI_API_KEY: ${{ sk-seTdDRtLCTlek7okAs7P1zAyu0tNAiaOZj2navb7S0QzhNRC }}
+          OPENAI_API_KEY: ${{ secrets.AI_KEY }}
         run: |
           git config --global user.name "JD-AI-Bot"
           git config --global user.email "bot@jd.com"
