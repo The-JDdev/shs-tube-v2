@@ -32,25 +32,27 @@ class MainActivity : AppCompatActivity() {
         // First-run: route to storage chooser before showing the main UI
         if (!StoragePrefs.isFirstRunDone(this) && intent?.action == Intent.ACTION_MAIN) {
             startActivity(Intent(this, StorageSetupActivity::class.java))
-            finish(); return
+            finish()
+            return
         }
 
         try {
             setContentView(R.layout.activity_main)
         } catch (t: Throwable) {
             Log.e(ShsTubeApp.TAG, "Fatal: setContentView failed", t)
-            finish(); return
+            finish()
+            return
         }
 
         bottomNav = findViewById(R.id.bottom_nav)
         bottomNav.setOnItemSelectedListener { item ->
             val frag: Fragment = try {
                 when (item.itemId) {
-                    R.id.tab_browser   -> BrowserFragment().also { f -> browserFrag = f }
-                    R.id.tab_search    -> SearchFragment()
+                    R.id.tab_browser -> BrowserFragment().also { f -> browserFrag = f }
+                    R.id.tab_search -> SearchFragment()
                     R.id.tab_downloads -> DownloadsFragment()
-                    R.id.tab_torrents  -> TorrentFragment()
-                    R.id.tab_about     -> AboutFragment()
+                    R.id.tab_torrents -> TorrentFragment()
+                    R.id.tab_about -> AboutFragment()
                     else -> return@setOnItemSelectedListener false
                 }
             } catch (t: Throwable) {
@@ -102,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** ACTION_VIEW (deep links / magnets). ACTION_SEND is now handled by ShareCatcherActivity. */
+    /** ACTION_VIEW (deep links / magnets). ACTION_SEND is handled by ShareCatcherActivity. */
     private fun handleIncoming(intent: Intent?) {
         try {
             if (intent == null) return
@@ -134,12 +136,6 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 perms += Manifest.permission.POST_NOTIFICATIONS
             }
-            // Android 9 (API 28) and below → both read & write storage needed.
-            // Android 10 (API 29) → still WRITE_EXTERNAL_STORAGE needed because we ship
-            //   requestLegacyExternalStorage=true to write into /storage/emulated/0/Download/SHSTube.
-            // Android 11+ (API 30+) → no legacy permission helps; we use app-private dir
-            //   OR the user grants MANAGE_EXTERNAL_STORAGE from the settings page (handled
-            //   in StorageSetupActivity). Nothing to request here.
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
                 perms += Manifest.permission.WRITE_EXTERNAL_STORAGE
                 perms += Manifest.permission.READ_EXTERNAL_STORAGE
@@ -149,10 +145,6 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (t: Throwable) {
             Log.e(ShsTubeApp.TAG, "Permission request failed (ignored)", t)
-        }
-    }
-}
-led (ignored)", t)
         }
     }
 }
