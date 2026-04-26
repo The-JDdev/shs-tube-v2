@@ -6,7 +6,27 @@
     android:padding="12dp"
     android:background="@color/bg_primary">
 
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    <LinearLayout android:id="@+id/batch_actions"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:background="@color/brand_orange_dark"
+        android:padding="8dp"
+        android:layout_marginBottom="8dp">
+        <Button android:id="@+id/btn_batch_cancel" android:text="Cancel"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:backgroundTint="@color/brand_orange" android:textColor="@color/white" android:textSize="12sp"/>
+        <Button android:id="@+id/btn_batch_delete" android:text="Delete"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:backgroundTint="@color/error" android:textColor="@color/white" android:textSize="12sp"/>
+        <Button android:id="@+id/btn_batch_share" android:text="Share"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:backgroundTint="@color/brand_blue" android:textColor="@color/white" android:textSize="12sp"/>
+    </LinearLayout>
+
+    <TextView android:id="@+id/header_downloads"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="@string/tab_downloads" android:textSize="22sp"
         android:textStyle="bold" android:textColor="@color/text_primary"
         android:paddingBottom="6dp" />

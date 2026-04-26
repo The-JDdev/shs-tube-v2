@@ -126,7 +126,7 @@ class BrowserFragment : Fragment() {
                 // Real browsers (Chrome, Brave, uBlock) only block sub-resources (ads, trackers, iframes).
                 // Without this guard, EasyList substring rules accidentally match `google.com`,
                 // `youtube.com`, etc. → entire homepage / search page renders blank.
-                val isMain = try { req.isForMainFrame } catch (_: Throwable) { false }
+                val isMain = try { req.isForMainFrame || req.requestHeaders?.get("Accept")?.contains("text/html") == true } catch (_: Throwable) { false }
                 if (isMain) {
                     // Use req.url.toString() — req is thread-safe; never use view.url here (wrong thread)
                     MediaSniffer.reportNetworkResource(url, req.requestHeaders["Accept"], currentPageUrl)

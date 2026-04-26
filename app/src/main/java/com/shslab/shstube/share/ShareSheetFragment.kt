@@ -98,7 +98,15 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
 
             if (audio.isEmpty() && video.isEmpty()) {
                 loadingLabel.visibility = View.VISIBLE
-                loadingLabel.text = "No formats found. Try the in-app browser."
+                loadingLabel.text = "No formats found. Opening in Browser..."
+                withContext(Dispatchers.Main) {
+                    val intent = android.content.Intent(requireContext(), com.shslab.shstube.MainActivity::class.java).apply {
+                        putExtra("open_url", url)
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    }
+                    startActivity(intent)
+                    dismissAllowingStateLoss()
+                }
                 return@launch
             }
             sectionsHost.visibility = View.VISIBLE

@@ -175,10 +175,19 @@ class ShareCatcherActivity : FragmentActivity() {
 
     private fun fetchTorrentBytes(url: String): TorrentEngine.ParsedTorrent? {
         return try {
-            val conn = java.net.URL(url).openConnection()
-            conn.connectTimeout = 15_000
-            conn.readTimeout = 30_000
-            val bytes = conn.getInputStream().use { input -> input.readBytes() }
+            val bytes = if (url.startsWith("content://")) {
+                contentResolver.openInputStream(android.net.Uri.parse(url))?.use { it.readBytes() }
+            } else if (url.startsWith("file://")) {
+                java.io.File(java.net.URI(url)).readBytes()
+            } else {
+                val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 30_000
+                conn.instanceFollowRedirects = true
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                conn.inputStream.use { input -> input.readBytes() }
+            }
+            if (bytes == null || bytes.isEmpty()) return null
             TorrentEngine.addTorrentBytes(bytes)
         } catch (t: Throwable) {
             com.shslab.shstube.util.DevLog.error("torrent", t, extra = "fetchTorrentBytes failed url=$url")

@@ -90,7 +90,16 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleIncoming(intent)
+        val openUrl = intent.getStringExtra("open_url")
+        if (!openUrl.isNullOrBlank()) {
+            bottomNav.selectedItemId = R.id.tab_browser
+            window.decorView.postDelayed({
+                findViewById<android.widget.EditText>(R.id.url_bar)?.setText(openUrl)
+                findViewById<android.widget.ImageButton>(R.id.btn_go)?.performClick()
+            }, 500)
+        } else {
+            handleIncoming(intent)
+        }
     }
 
     /** ACTION_VIEW (deep links / magnets). ACTION_SEND is now handled by ShareCatcherActivity. */
@@ -140,6 +149,10 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (t: Throwable) {
             Log.e(ShsTubeApp.TAG, "Permission request failed (ignored)", t)
+        }
+    }
+}
+led (ignored)", t)
         }
     }
 }
