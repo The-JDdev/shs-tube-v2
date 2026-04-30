@@ -29,30 +29,15 @@ import com.shslab.shstube.service.DownloadService
 import com.shslab.shstube.torrent.TorrentEngine
 import kotlinx.coroutines.launch
 import java.io.File
+import androidx.core.content.ContextCompat
 
 /**
  * Live download dashboard backed by Room. Items survive app death / reboot.
- *
- * The RecyclerView observes Repository.observeAll() so we get push-style updates whenever
- * DownloadService writes a new progress row.
- *
- * Active rows show a Cancel (✕) button that fires DownloadService.ACTION_CANCEL,
- * which kills the yt-dlp process and wipes any .part / .ytdl temp files.
- *
- * The header shows live engine health so init failures are immediately visible
- * (no more silent "search blank, downloads dead" mystery).
  */
 class DownloadsFragment : Fragment() {
 
     private lateinit var adapter: DownloadsAdapter
-    private var statusHandler: Handler? = null
-    private val statusRunnable = object : Runnable {
-        override fun run() {
-            updateEngineStatus()
-            statusHandler?.postDelayed(this, 1500)
-        }
-    }
-    private var statusView: TextView? = null
+    private var batchActions: View? = null
 
     private val pickTorrent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode != Activity.RESULT_OK) return@registerForActivityResult
@@ -80,11 +65,17 @@ class DownloadsFragment : Fragment() {
         val btnPickTorrent = v.findViewById<Button>(R.id.btn_pick_torrent)
         val btnBatch  = v.findViewById<Button>(R.id.btn_batch_add)
         val batchInput = v.findViewById<EditText>(R.id.input_batch)
-        statusView = v.findViewById(R.id.engine_status)
+        batchActions = v.findViewById(R.id.batch_actions)
+
+        val btnBatchCancel = v.findViewById<Button>(R.id.btn_batch_cancel)
+        val btnBatchDelete = v.findViewById<Button>(R.id.btn_batch_delete)
+        val btnBatchShare = v.findViewById<Button>(R.id.btn_batch_share)
 
         input.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) input.selectAll() }
 
-        adapter = DownloadsAdapter()
+        adapter = DownloadsAdapter {
+            batchActions?.visibility = if (adapter.selectedIds.isNotEmpty()) View.VISIBLE else View.GONE
+        }
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
 
@@ -124,49 +115,86 @@ class DownloadsFragment : Fragment() {
             batchInput.setText("")
         }
 
-        statusHandler = Handler(Looper.getMainLooper())
-        statusHandler?.post(statusRunnable)
+        btnBatchCancel.setOnClickListener {
+            val selected = adapter.selectedIds.toList()
+            for(id in selected) {
+                DownloadService.cancel(requireContext(), id)
+            }
+            adapter.selectedIds.clear()
+            adapter.notifyDataSetChanged()
+            batchActions?.visibility = View.GONE
+        }
+
+        btnBatchDelete.setOnClickListener {
+             AlertDialog.Builder(requireContext())
+                .setTitle("Delete ${adapter.selectedIds.size} files permanently?")
+                .setMessage("This will delete the selected files from storage and remove them from history.")
+                .setPositiveButton("Delete") { _, _ ->
+                    val selected = adapter.selectedIds.toList()
+                    for(id in selected) {
+                         ShsTubeApp.appScope.launch {
+                             val item = DownloadRepository.getById(id)
+                             if (item != null) {
+                                 try { item.localPath?.let { File(it).delete() } } catch (_: Throwable) {}
+                                 DownloadRepository.deleteAsync(item.id)
+                             }
+                         }
+                    }
+                    adapter.selectedIds.clear()
+                    adapter.notifyDataSetChanged()
+                    batchActions?.visibility = View.GONE
+                    Toast.makeText(requireContext(), "Deleted", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        btnBatchShare.setOnClickListener {
+            val selected = adapter.selectedIds.toList()
+            val uris = ArrayList<android.net.Uri>()
+            var mime = "*/*"
+            for(id in selected) {
+                 val item = adapter.data.find { it.id == id }
+                 if(item != null && item.localPath != null) {
+                     try {
+                         val file = File(item.localPath!!)
+                         if(file.exists()){
+                             val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
+                             uris.add(uri)
+                             if(mime == "*/*" && item.mime.isNotBlank()){
+                                 mime = item.mime
+                             }
+                         }
+                     } catch (_:Throwable) {}
+                 }
+            }
+
+            if(uris.isNotEmpty()){
+                val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                    type = mime
+                    putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                requireContext().startActivity(Intent.createChooser(shareIntent, "Share ${uris.size} files via"))
+            } else {
+                Toast.makeText(requireContext(), "No downloaded files to share.", Toast.LENGTH_SHORT).show()
+            }
+
+            adapter.selectedIds.clear()
+            adapter.notifyDataSetChanged()
+            batchActions?.visibility = View.GONE
+        }
+
         return v
     }
 
-    override fun onDestroyView() {
-        statusHandler?.removeCallbacks(statusRunnable)
-        statusHandler = null
-        statusView = null
-        super.onDestroyView()
-    }
-
-    private fun updateEngineStatus() {
-        val ytOk = ShsTubeApp.ytDlpReady
-        val ytErr = ShsTubeApp.ytDlpInitError
-        val ytUpd = ShsTubeApp.ytDlpUpdating
-        val ytVer = ShsTubeApp.ytDlpVersion
-        val npOk = ShsTubeApp.newPipeReady
-        val tOk = ShsTubeApp.torrentReady
-        val tErr = TorrentEngine.nativeError
-
-        val ytSym = when {
-            ytUpd -> "↻ updating"
-            ytOk  -> "✓"
-            else  -> "…"
-        }
-        val verTag = if (ytVer != null) " v$ytVer" else ""
-
-        val line = "yt-dlp $ytSym$verTag   NewPipe " + (if (npOk) "✓" else "…") +
-            "   Torrent " + (if (tOk) "✓" else "…")
-
-        val errs = listOfNotNull(
-            if (!ytOk && !ytErr.isNullOrBlank()) "yt-dlp: ${ytErr.take(70)}" else null,
-            if (!tOk && !tErr.isNullOrBlank()) "Torrent: ${tErr.take(70)}" else null
-        )
-        statusView?.text = if (errs.isEmpty()) line else line + "\n" + errs.joinToString("\n")
-    }
 }
 
 /** Live-updating adapter with DiffUtil — smooth animated changes as progress ticks. */
-private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
+private class DownloadsAdapter(val onSelectionChanged: () -> Unit) : RecyclerView.Adapter<DownloadsAdapter.VH>() {
 
-    private val data = mutableListOf<DownloadEntity>()
+    val data = mutableListOf<DownloadEntity>()
+    val selectedIds = mutableSetOf<Long>()
 
     fun submit(newList: List<DownloadEntity>) {
         val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
@@ -188,6 +216,7 @@ private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
         val progress: ProgressBar = v.findViewById(R.id.dl_progress)
         val play: ImageButton = v.findViewById(R.id.dl_play)
         val cancel: ImageButton = v.findViewById(R.id.dl_cancel)
+        val cardRoot: com.google.android.material.card.MaterialCardView = v.findViewById(R.id.card_root)
     }
 
     override fun onCreateViewHolder(p: ViewGroup, vt: Int): VH =
@@ -220,8 +249,8 @@ private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
         h.speed.visibility = if (h.speed.text.isNullOrBlank()) View.GONE else View.VISIBLE
 
         // Animated progress bar (DiffUtil + setProgress(p, animate=true) gives the fill animation)
-        val isActive = item.status == "downloading" || item.status == "initializing" || item.status == "queued"
-        val showProgress = isActive || (item.progress in 1..99)
+        val isActiveState = item.status == "downloading" || item.status == "initializing" || item.status == "queued"
+        val showProgress = isActiveState || (item.progress in 1..99)
         h.progress.visibility = if (showProgress || item.status == "completed") View.VISIBLE else View.GONE
         h.progress.max = 100
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
@@ -244,22 +273,44 @@ private class DownloadsAdapter : RecyclerView.Adapter<DownloadsAdapter.VH>() {
         }
 
         // Cancel (kill yt-dlp + wipe .part) — only for active rows
-        h.cancel.visibility = if (isActive) View.VISIBLE else View.GONE
+        h.cancel.visibility = if (isActiveState) View.VISIBLE else View.GONE
         h.cancel.setOnClickListener {
             val ctx = h.itemView.context
             DownloadService.cancel(ctx, item.id)
             Toast.makeText(ctx, "Cancelling…", Toast.LENGTH_SHORT).show()
         }
 
-        // Long-press → context action menu (Rename / Share / Delete file / Remove from history / Cancel)
+        val ctx = h.itemView.context
+        if (selectedIds.contains(item.id)) {
+            h.cardRoot.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.selection_overlay))
+        } else {
+            h.cardRoot.setCardBackgroundColor(ContextCompat.getColor(ctx, R.color.bg_surface))
+        }
+
+        h.itemView.setOnClickListener {
+            if (selectedIds.isNotEmpty()) {
+                if (selectedIds.contains(item.id)) selectedIds.remove(item.id) else selectedIds.add(item.id)
+                notifyItemChanged(pos)
+                onSelectionChanged()
+            } else {
+                // If not in selection mode, maybe act normally or queue it again? (Just leaving empty to not interfere with play)
+            }
+        }
+
+        // Long-press → context action menu (Rename / Share / Delete file / Remove from history / Cancel) OR Multi-select
         h.itemView.setOnLongClickListener {
-            val ctx = h.itemView.context
+            if (selectedIds.isEmpty()) {
+                selectedIds.add(item.id)
+                notifyItemChanged(pos)
+                onSelectionChanged()
+                return@setOnLongClickListener true
+            }
+
             val isCompleted = item.status == "completed"
-            val isActive = item.status in listOf("downloading", "queued", "initializing")
             val hasFile = !item.localPath.isNullOrBlank() && File(item.localPath).exists()
 
             val options = mutableListOf<String>()
-            if (isActive) options += "✕  Cancel download"
+            if (isActiveState) options += "✕  Cancel download"
             if (isCompleted && hasFile) options += "▶  Play"
             if (isCompleted && hasFile) options += "↑  Share file"
             if (isCompleted && hasFile) options += "✏  Rename file"

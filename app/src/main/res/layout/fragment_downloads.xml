@@ -36,15 +36,15 @@
         android:textSize="12sp" android:textColor="@color/text_muted"
         android:paddingBottom="6dp" />
 
-    <TextView android:id="@+id/engine_status"
+    <!-- <TextView android:id="@+id/engine_status"
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:text="Engines: starting…"
+        android:text=""
         android:textSize="11sp"
         android:textColor="@color/text_muted"
         android:background="@color/bg_surface"
         android:padding="8dp"
         android:layout_marginBottom="8dp"
-        android:fontFamily="monospace" />
+        android:fontFamily="monospace" /> -->
 
     <EditText android:id="@+id/input_url"
         android:layout_width="match_parent" android:layout_height="48dp"
