@@ -79,24 +79,25 @@ class ShareCatcherActivity : FragmentActivity() {
                 addOption("--flat-playlist")
                 addOption("--skip-download")
                 addOption("--no-warnings")
-                addOption("--extractor-args", "youtube:player_client=tv,web")
+                addOption("--extractor-args", "youtube:player_client=ios,web")
             }
             val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
-            val entries = info.entries ?: return null
+            val entries = info.formats ?: emptyList()
+            if(entries.isEmpty()) return null
             if (entries.size <= 1) return null
             val urls = mutableListOf<String>()
             val titles = mutableListOf<String>()
             val metas = mutableListOf<String>()
             for (e in entries.take(50)) {
-                val u = e.url ?: e.webpageUrl ?: continue
-                val abs = if (u.startsWith("http")) u else "https://www.youtube.com/watch?v=$u"
+                val u = e.url ?: e.url ?: continue
+                val abs = if (u.toString().startsWith("http")) u else "https://www.youtube.com/watch?v=$u"
                 urls += abs
-                titles += (e.title ?: "")
-                val durStr = e.duration?.toLong()?.takeIf { it > 0 }?.let { d ->
+                titles += (e.formatId ?: "")
+                val durStr = e.fileSize.toString()?.toLong()?.takeIf { it.toLong() > 0L }?.let { d ->
                     val m = d / 60; val s = d % 60; "%d:%02d".format(m, s)
                 }.orEmpty()
-                val upl = e.uploader.orEmpty()
-                metas += listOf(durStr, upl).filter { it.isNotBlank() }.joinToString(" • ")
+                val upl = e.ext.orEmpty()
+                metas += listOf(durStr, upl).filter { it.toString().isNotBlank() }.joinToString(" • ")
             }
             if (urls.size <= 1) null
             else Multi(info.title.orEmpty(), urls, titles, metas)

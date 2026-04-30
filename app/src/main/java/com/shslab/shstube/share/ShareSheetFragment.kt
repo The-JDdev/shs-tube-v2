@@ -158,13 +158,14 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
 
             for (i in 0 until arr.length()) {
                 val f = arr.optJSONObject(i) ?: continue
-                val formatId = f.optString("format_id").ifBlank { continue }
+                val formatId = f.optString("format_id").ifBlank { "" }
+                if (formatId.isBlank()) continue
                 val ext = f.optString("ext", "")
                 val vcodec = f.optString("vcodec", "")
                 val acodec = f.optString("acodec", "")
                 val height = f.optInt("height", 0)
                 val abr = f.optInt("abr", 0)
-                val filesize = f.optLong("filesize", 0L).let { fs ->
+                val filesize = f.optLong("filesize", 0L).let { fs: Long ->
                     if (fs > 0) fs else f.optLong("filesize_approx", 0L)
                 }
                 val isAudioOnly = (vcodec == "none" || vcodec.isBlank()) && acodec.isNotBlank() && acodec != "none"

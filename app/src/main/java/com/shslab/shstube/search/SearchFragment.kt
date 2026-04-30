@@ -169,7 +169,7 @@ class SearchFragment : Fragment() {
                     when (item) {
                         is StreamInfoItem -> {
                             val rawUrl = item.url ?: ""
-                            // Derive thumbnail from YouTube video ID — works for any YT URL,
+                            // Derive.url from YouTube video ID — works for any YT URL,
                             // sidesteps NewPipe's thumbnailUrl API which changed across versions.
                             val ytId = Regex("[?&]v=([A-Za-z0-9_-]{11})").find(rawUrl)?.groupValues?.getOrNull(1) ?: ""
                             val thumb = if (ytId.isNotEmpty()) "https://i.ytimg.com/vi/$ytId/hqdefault.jpg" else ""
@@ -210,28 +210,28 @@ class SearchFragment : Fragment() {
             if (hits.isEmpty() && currentFilter == "videos" && ShsTubeApp.ytDlpReady) {
                 try {
                     val req = com.yausername.youtubedl_android.YoutubeDLRequest("ytsearch20:$query").apply {
-                        addOption("--extractor-args", "youtube:player_client=tv,web")
+                        addOption("--extractor-args", "youtube:player_client=ios,web")
                         addOption("--no-playlist")
                         addOption("--flat-playlist")
                         addOption("--skip-download")
                         addOption("--user-agent", com.shslab.shstube.service.DownloadService.USER_AGENT)
                     }
                     val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
-                    val entries = info.entries ?: emptyList()
+                    val entries = info.formats ?: emptyList()
                     for (e in entries.take(50)) {
-                        val rawU = e.url ?: e.webpageUrl ?: continue
-                        val absUrl = if (rawU.startsWith("http")) rawU else "https://www.youtube.com/watch?v=$rawU"
+                        val rawU = e.url ?: e.url ?: continue
+                        val absUrl = if (rawU.toString().startsWith("http")) rawU else "https://www.youtube.com/watch?v=$rawU"
                         // Prefer yt-dlp thumbnail field; fall back to ytimg CDN from video ID
-                        val thumbUrl = e.thumbnail?.takeIf { t -> t.startsWith("http") }
+                        val thumbUrl = e.url?.takeIf { t -> t.toString().startsWith("http") }
                             ?: Regex("[?&]v=([A-Za-z0-9_-]{11})").find(absUrl)?.groupValues?.getOrNull(1)
                                 ?.let { vid -> "https://i.ytimg.com/vi/$vid/hqdefault.jpg" }
                             ?: ""
                         hits += SearchHit(
                             kind = HitKind.Video,
-                            title = e.title ?: "(no title)",
+                            title = e.formatId ?: "(no title)",
                             url = absUrl,
-                            uploader = e.uploader ?: "",
-                            duration = formatDuration(e.duration?.toLong() ?: 0L),
+                            uploader = e.ext ?: "",
+                            duration = formatDuration(e.fileSize.toString()?.toLong() ?: 0L),
                             thumbnailUrl = thumbUrl
                         )
                     }

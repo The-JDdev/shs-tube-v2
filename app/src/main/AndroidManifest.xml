@@ -91,7 +91,7 @@
         <activity
             android:name=".share.ShareCatcherActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:theme="@android:style/Theme.ShsTube.Translucent"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:launchMode="singleTask">

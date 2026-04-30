@@ -210,7 +210,7 @@
 
         <TextView
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="See every runtime exception from yt-dlp, NewPipe, libtorrent, WebView, share &amp; format sheets — with full stack traces — directly inside the app. No PC required."
+            android:text="See every runtime exception directly inside the app."
             android:textColor="@color/text_muted" android:textSize="11sp"
             android:gravity="center"
             android:layout_marginBottom="10dp" />
