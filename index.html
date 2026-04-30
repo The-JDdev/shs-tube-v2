@@ -1,299 +1,189 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>shs-tube-v2 | The Ultimate Next-Gen Downloader</title>
+    <title>shs-tube-v2 | Ultimate Downloader Engine</title>
     
-    <!-- Heavy Artillery: Tailwind CSS -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- AOS Animation CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Custom Config for Tailwind -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brandDark: '#0b0c10',
-                        glassBg: 'rgba(25, 25, 35, 0.4)',
-                        neonRed: '#ff0055',
+                        glass: 'rgba(20, 20, 30, 0.4)',
+                        glassBorder: 'rgba(255, 255, 255, 0.1)',
+                        neonPink: '#ff0055',
                         neonBlue: '#00d2ff'
-                    },
-                    backgroundImage: {
-                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
                     }
                 }
             }
         }
     </script>
 
-    <!-- Heavy Artillery: FontAwesome & Atropos 3D -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/atropos@2.0.2/atropos.css" />
-
     <style>
-        body {
-            background-color: #050505;
-            color: white;
-            font-family: 'Inter', system-ui, sans-serif;
-            overflow-x: hidden;
-        }
-
-        /* Netflix-style Glassmorphism */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #050505; color: white; overflow-x: hidden; }
+        
+        /* 3D Background Container */
+        #vanta-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
+        
+        /* Glassmorphism Utilities */
         .glass-panel {
-            background: rgba(20, 20, 25, 0.65);
+            background: var(--glass);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--glassBorder);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
-
-        /* Text Gradients */
-        .text-gradient-red {
-            background: linear-gradient(135deg, #ff0055, #ff4b2b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .text-gradient-blue {
-            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+        
+        /* Text Gradient */
+        .text-gradient {
+            background: linear-gradient(90deg, #ff0055, #00d2ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Dynamic Glow Background */
-        .glow-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -1;
-            background: radial-gradient(circle at 20% 30%, rgba(255, 0, 85, 0.15) 0%, transparent 40%),
-                        radial-gradient(circle at 80% 70%, rgba(0, 210, 255, 0.15) 0%, transparent 40%);
-            filter: blur(60px);
-            animation: pulseGlow 8s infinite alternate;
+        /* Neon Glow Hover */
+        .glow-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+            transform: translateY(-3px);
         }
-
-        @keyframes pulseGlow {
-            0% { opacity: 0.7; transform: scale(1); }
-            100% { opacity: 1; transform: scale(1.1); }
-        }
-
-        /* Atropos specific overrides for glass look */
-        .my-atropos { width: 100%; height: 100%; border-radius: 24px; }
-        .atropos-inner { border-radius: 24px; overflow: visible; }
     </style>
 </head>
 <body class="antialiased">
 
-    <div class="glow-bg"></div>
+    <!-- 3D Vanta Background -->
+    <div id="vanta-canvas"></div>
 
-    <!-- Sticky Glass Navbar -->
-    <nav class="fixed w-full z-50 glass-panel py-4 px-8 flex justify-between items-center">
-        <div class="text-2xl font-black tracking-tighter">
-            <span class="text-white">shs-</span><span class="text-gradient-red">tube</span><span class="text-gradient-blue">-v2</span>
-        </div>
-        <div class="flex gap-6 items-center">
-            <a href="#features" class="hidden md:block text-gray-300 hover:text-white transition font-semibold">Features</a>
-            <a href="https://github.com/The-JDdev/shs-tube-v2" target="_blank" class="text-2xl hover:text-neonBlue transition transform hover:scale-110">
-                <i class="fab fa-github"></i>
-            </a>
+    <!-- Navbar -->
+    <nav class="fixed w-full top-0 z-50 glass-panel px-6 py-4 flex justify-between items-center transition-all duration-300">
+        <div class="text-2xl font-black tracking-widest text-gradient">shs-tube-v2</div>
+        <div class="flex gap-4 text-xl">
+            <a href="https://github.com/The-JDdev" target="_blank" class="hover:text-neonBlue transition"><i class="fab fa-github"></i></a>
+            <a href="https://t.me/aamoviesofficial" target="_blank" class="hover:text-neonBlue transition"><i class="fab fa-telegram"></i></a>
+            <a href="https://facebook.com/itsshsshobuj" target="_blank" class="hover:text-neonBlue transition"><i class="fab fa-facebook"></i></a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <header class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-        <div class="container mx-auto px-6 text-center z-10 hero-content">
-            <div class="inline-block mb-4 px-4 py-1 rounded-full glass-panel border border-neonBlue/30 text-neonBlue text-sm font-bold tracking-widest uppercase">
-                Release Candidate 1.0 Ready
-            </div>
-            <h1 class="text-5xl md:text-8xl font-black mb-6 leading-tight drop-shadow-2xl">
-                The Engine You <br>
-                <span class="text-gradient-red">Deserve.</span>
-            </h1>
-            <p class="text-lg md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto font-medium">
-                SnapTube meets Netflix. Powered by blazing fast <span class="text-white font-bold">yt-dlp</span> and unrestricted <span class="text-white font-bold">jlibtorrent</span>. Say goodbye to limits, blocks, and boring UIs.
+    <section class="min-h-screen flex items-center justify-center pt-20 px-4">
+        <div class="glass-panel p-10 md:p-16 rounded-3xl max-w-4xl text-center" data-aos="zoom-in" data-aos-duration="1000">
+            <h1 class="text-5xl md:text-7xl font-black mb-6 text-gradient drop-shadow-lg">The Next-Gen Engine</h1>
+            <p class="text-gray-300 text-lg md:text-xl mb-10 leading-relaxed">
+                Experience the ultimate hybrid of SnapTube & Netflix. Powered by <span class="font-bold text-white">yt-dlp</span> and blazing fast <span class="font-bold text-white">jlibtorrent</span>. Say goodbye to limits, ads, and boring UIs.
             </p>
             
             <div class="flex flex-col sm:flex-row justify-center gap-6">
-                <!-- Atropos 3D Button 1 -->
-                <div class="atropos btn-atropos w-full sm:w-auto">
-                    <div class="atropos-scale">
-                        <div class="atropos-rotate">
-                            <div class="atropos-inner">
-                                <a href="https://github.com/The-JDdev/shs-tube-v2/releases" class="relative block px-8 py-4 bg-gradient-to-r from-red-600 to-pink-600 rounded-full font-bold text-lg shadow-[0_0_40px_rgba(255,0,85,0.4)] hover:shadow-[0_0_60px_rgba(255,0,85,0.6)] transition-all">
-                                    <i class="fab fa-github mr-2" data-atropos-offset="5"></i> 
-                                    <span data-atropos-offset="2">Download from GitHub</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Atropos 3D Button 2 -->
-                <div class="atropos btn-atropos w-full sm:w-auto">
-                    <div class="atropos-scale">
-                        <div class="atropos-rotate">
-                            <div class="atropos-inner">
-                                <a href="#" class="relative block px-8 py-4 glass-panel rounded-full font-bold text-lg hover:border-neonBlue transition-all group">
-                                    <i class="fas fa-download text-neonBlue mr-2 group-hover:animate-bounce" data-atropos-offset="5"></i> 
-                                    <span data-atropos-offset="2">Get on APKPure</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <a href="#" class="glow-btn bg-gradient-to-r from-gray-800 to-black border border-gray-600 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all">
+                    <i class="fab fa-github text-2xl"></i> GitHub Release
+                </a>
+                <a href="#" class="glow-btn bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 transition-all">
+                    <i class="fab fa-android text-2xl"></i> APKPure Download
+                </a>
             </div>
-        </div>
-    </header>
-
-    <!-- Marquee/Trusted Tech Section -->
-    <div class="py-10 border-y border-white/10 bg-black/40 backdrop-blur-md overflow-hidden">
-        <div class="container mx-auto px-6 text-center text-gray-500 font-bold uppercase tracking-widest mb-6">Powered By The Best Engines</div>
-        <div class="flex justify-center gap-10 md:gap-20 flex-wrap text-3xl md:text-5xl text-gray-600 opacity-70">
-            <i class="fab fa-youtube hover:text-red-500 transition cursor-pointer"></i>
-            <i class="fab fa-instagram hover:text-pink-500 transition cursor-pointer"></i>
-            <i class="fab fa-facebook hover:text-blue-500 transition cursor-pointer"></i>
-            <i class="fas fa-magnet hover:text-neonBlue transition cursor-pointer"></i>
-            <i class="fab fa-android hover:text-green-500 transition cursor-pointer"></i>
-        </div>
-    </div>
-
-    <!-- Core Pillars / Features Matrix (Hardcore 3D Cards) -->
-    <section id="features" class="py-32 container mx-auto px-6">
-        <div class="text-center mb-20 section-title">
-            <h2 class="text-4xl md:text-6xl font-black mb-4">Unmatched <span class="text-gradient-blue">Firepower.</span></h2>
-            <p class="text-xl text-gray-400">Everything you asked for, executed flawlessly in Kotlin.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            <!-- Feature 1: yt-dlp -->
-            <div class="atropos my-atropos feature-card">
-                <div class="atropos-scale">
-                    <div class="atropos-rotate">
-                        <div class="atropos-inner glass-panel p-8 h-full flex flex-col items-start border-t-4 border-t-neonRed">
-                            <div class="bg-red-500/20 p-4 rounded-2xl mb-6" data-atropos-offset="5">
-                                <i class="fas fa-bolt text-4xl text-neonRed"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3" data-atropos-offset="3">Universal Engine (yt-dlp)</h3>
-                            <p class="text-gray-400 leading-relaxed" data-atropos-offset="1">Bypasses PO Tokens and DRM perfectly. Fetches native 1080p, 4K, and 8K qualities without breaking a sweat.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 2: jlibtorrent -->
-            <div class="atropos my-atropos feature-card">
-                <div class="atropos-scale">
-                    <div class="atropos-rotate">
-                        <div class="atropos-inner glass-panel p-8 h-full flex flex-col items-start border-t-4 border-t-neonBlue">
-                            <div class="bg-blue-500/20 p-4 rounded-2xl mb-6" data-atropos-offset="5">
-                                <i class="fas fa-magnet text-4xl text-neonBlue"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3" data-atropos-offset="3">Blazing Torrents</h3>
-                            <p class="text-gray-400 leading-relaxed" data-atropos-offset="1">Dead zones are gone. Powered by jlibtorrent, magnet links and .torrent files parse instantly and download at maximum bandwidth.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 3: True Overlay -->
-            <div class="atropos my-atropos feature-card">
-                <div class="atropos-scale">
-                    <div class="atropos-rotate">
-                        <div class="atropos-inner glass-panel p-8 h-full flex flex-col items-start border-t-4 border-t-purple-500">
-                            <div class="bg-purple-500/20 p-4 rounded-2xl mb-6" data-atropos-offset="5">
-                                <i class="fas fa-layer-group text-4xl text-purple-400"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3" data-atropos-offset="3">True SnapTube Overlay</h3>
-                            <p class="text-gray-400 leading-relaxed" data-atropos-offset="1">Share a link from FB/YouTube and only a sleek, transparent BottomSheet appears. No annoying full-app launches interrupting your flow.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 4: Smart UI -->
-            <div class="atropos my-atropos feature-card">
-                <div class="atropos-scale">
-                    <div class="atropos-rotate">
-                        <div class="atropos-inner glass-panel p-8 h-full flex flex-col items-start border-t-4 border-t-gray-400">
-                            <div class="bg-gray-500/20 p-4 rounded-2xl mb-6" data-atropos-offset="5">
-                                <i class="fas fa-tv text-4xl text-gray-300"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3" data-atropos-offset="3">Netflix-Style Premium UI</h3>
-                            <p class="text-gray-400 leading-relaxed" data-atropos-offset="1">Material 3, Glassmorphism, and deep Dark Mode. Removed all silly dev logs for a pure, cinematic user experience.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 5: Multi-Download -->
-            <div class="atropos my-atropos feature-card">
-                <div class="atropos-scale">
-                    <div class="atropos-rotate">
-                        <div class="atropos-inner glass-panel p-8 h-full flex flex-col items-start border-t-4 border-t-pink-500">
-                            <div class="bg-pink-500/20 p-4 rounded-2xl mb-6" data-atropos-offset="5">
-                                <i class="fas fa-images text-4xl text-pink-400"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3" data-atropos-offset="3">Carousel/Playlist Multi-Select</h3>
-                            <p class="text-gray-400 leading-relaxed" data-atropos-offset="1">Share an Insta carousel or a web playlist. Our smart UI lets you "Download All" or handpick exactly which items you want.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 6: AdBlock & Cleaner -->
-            <div class="atropos my-atropos feature-card">
-                <div class="atropos-scale">
-                    <div class="atropos-rotate">
-                        <div class="atropos-inner glass-panel p-8 h-full flex flex-col items-start border-t-4 border-t-green-500">
-                            <div class="bg-green-500/20 p-4 rounded-2xl mb-6" data-atropos-offset="5">
-                                <i class="fas fa-broom text-4xl text-green-400"></i>
-                            </div>
-                            <h3 class="text-2xl font-bold mb-3" data-atropos-offset="3">AdBlock Browser & Cleaner</h3>
-                            <p class="text-gray-400 leading-relaxed" data-atropos-offset="1">Built-in browser with fixed thread crashes. Long-press to download anything. Plus, a 1-click Junk Cleaner to wipe out .part and cache files.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </section>
 
-    <!-- Deep Dive / Tech Specs Section -->
-    <section class="py-20 relative bg-black/60 border-t border-white/5">
-        <div class="container mx-auto px-6">
-            <div class="flex flex-col md:flex-row items-center gap-16">
-                <div class="md:w-1/2 tech-text">
-                    <h2 class="text-4xl md:text-5xl font-black mb-6">Engineered for <br><span class="text-gradient-red">Zero Thread Crashes.</span></h2>
-                    <p class="text-gray-400 text-lg mb-6 leading-relaxed">
-                        We rewrote the rules. `shouldInterceptRequest` is fully optimized to let main frames load while brutally blocking ads. All `WebViewClient` UI updates are strictly wired to the Main UI Thread.
-                    </p>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-4 text-gray-300 font-semibold">
-                            <i class="fas fa-check-circle text-neonBlue"></i> Native Kotlin Architecture
-                        </li>
-                        <li class="flex items-center gap-4 text-gray-300 font-semibold">
-                            <i class="fas fa-check-circle text-neonBlue"></i> Advanced Multi-select File Manager
-                        </li>
-                        <li class="flex items-center gap-4 text-gray-300 font-semibold">
-                            <i class="fas fa-check-circle text-neonBlue"></i> Theme.Translucent.NoTitleBar Implementation
-                        </li>
-                    </ul>
-                </div>
-                <!-- Abstract Code/Terminal Block -->
-                <div class="md:w-1/2 w-full terminal-block">
-                    <div class="glass-panel rounded-2xl p-6 shadow-2xl border border-gray-700/50">
-                        <div class="flex gap-2 mb-4">
-                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        </div>
-                        <pre class="text-sm text-green-400 font-mono overflow-x-auto"><code>> Starting Daemon
-> IDLE
-> Resolving yt-dlp args...
-> --extractor-args "youtube:player_client=ios,web"
-> SUCCESS: Bypassed PO Token.
-> Fetching jlibtorrent engine...
-> Torrents routing initialized...
-> BUILD SUCCESSFUL in 2s
-> shs-tube-v2 is ready for deployment.</code></pre>
+    <!-- Massive Features Grid -->
+    <section class="py-20 px-6 max-w-7xl mx-auto">
+        <h2 class="text-4xl font-bold text-center mb-16 text-gradient" data-aos="fade-up">Core Pillars & Features</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Card 1 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="100">
+                <i class="fas fa-video text-4xl text-neonPink mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">Universal Media Engine</h3>
+                <p class="text-gray-400">Bypass PO Tokens! Fetch 1080p, 4K, and 8K formats directly from YouTube, Facebook, and Instagram via raw yt-dlp power.</p>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="200">
+                <i class="fas fa-magnet text-4xl text-neonBlue mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">Unrestricted Torrents</h3>
+                <p class="text-gray-400">Magnet links or .torrent files—download at absolute maximum bandwidth without crashes using optimized jlibtorrent.</p>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="300">
+                <i class="fas fa-layer-group text-4xl text-neonPink mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">True Overlay UI</h3>
+                <p class="text-gray-400">Share a link from any app, and a transparent BottomSheet pops up perfectly without interrupting your current screen.</p>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="100">
+                <i class="fas fa-film text-4xl text-neonBlue mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">Netflix-Style Premium UI</h3>
+                <p class="text-gray-400">Material 3, deep dark mode, glassmorphism, and buttery smooth animations. A UI that respects your eyes.</p>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="200">
+                <i class="fas fa-images text-4xl text-neonPink mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">Smart Carousel Fetch</h3>
+                <p class="text-gray-400">Share Instagram multi-photo posts or web playlists. Select exactly which items to download instantly.</p>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="300">
+                <i class="fas fa-broom text-4xl text-neonBlue mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">Storage Junk Cleaner</h3>
+                <p class="text-gray-400">One-click scan to destroy all temporary .part files, cache, and yt-dlp leftovers. Keep your phone clean.</p>
+            </div>
+            
+            <!-- Card 7 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="100">
+                <i class="fas fa-shield-alt text-4xl text-neonPink mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">Built-in AdBlock Browser</h3>
+                <p class="text-gray-400">Browse cleanly. Long-press any media to download instantly without thread crashes or blank screens.</p>
+            </div>
+
+            <!-- Card 8 -->
+            <div class="glass-panel p-8 rounded-2xl tilt-card" data-tilt data-aos="fade-up" data-aos-delay="200">
+                <i class="fas fa-folder-open text-4xl text-neonBlue mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">Pro File Manager</h3>
+                <p class="text-gray-400">Multi-select downloads to cancel, delete, rename, or share multiple files simultaneously.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Developer & Support Section -->
+    <section class="py-20 px-6 max-w-5xl mx-auto">
+        <div class="glass-panel rounded-3xl p-10 md:p-16 flex flex-col md:flex-row gap-12 items-center" data-aos="zoom-in">
+            <!-- Contact Info -->
+            <div class="flex-1">
+                <h2 class="text-3xl font-bold mb-6 text-white border-b border-gray-700 pb-4">Connect with JD</h2>
+                <ul class="space-y-4 text-lg">
+                    <li><i class="fas fa-envelope text-neonPink w-8"></i> <a href="mailto:thejddev.official@gmail.com" class="hover:text-neonBlue transition">thejddev.official@gmail.com</a></li>
+                    <li><i class="fab fa-telegram text-neonBlue w-8"></i> <a href="https://t.me/aamoviesofficial" target="_blank" class="hover:text-neonPink transition">@aamoviesofficial</a></li>
+                    <li><i class="fab fa-facebook text-blue-500 w-8"></i> <a href="https://facebook.com/itsshsshobuj" target="_blank" class="hover:text-neonBlue transition">itsshsshobuj</a></li>
+                </ul>
+            </div>
+            
+            <!-- Donation Info -->
+            <div class="flex-1 bg-black bg-opacity-50 p-8 rounded-2xl border border-gray-800 w-full">
+                <h3 class="text-2xl font-bold mb-6 text-center text-gradient"><i class="fas fa-coffee"></i> Support the Project</h3>
+                <div class="space-y-4 font-mono text-sm">
+                    <div class="flex justify-between items-center bg-gray-900 p-3 rounded">
+                        <span class="text-gray-400">WebMoney (WMT)</span>
+                        <span class="text-neonBlue">T202226490170</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-900 p-3 rounded">
+                        <span class="text-gray-400">WebMoney (WMZ)</span>
+                        <span class="text-neonPink">Z430378899900</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-900 p-3 rounded">
+                        <span class="text-gray-400">bKash (BD)</span>
+                        <span class="text-green-400">01310211442</span>
                     </div>
                 </div>
             </div>
@@ -301,82 +191,50 @@
     </section>
 
     <!-- Footer -->
-    <footer class="glass-panel mt-20 border-t border-white/10 pt-16 pb-8">
-        <div class="container mx-auto px-6 text-center">
-            <h2 class="text-3xl font-black mb-6">Ready to Experience the Power?</h2>
-            <a href="https://github.com/The-JDdev/shs-tube-v2" class="inline-block px-10 py-4 bg-white text-black font-black rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)] mb-12">
-                Clone the Repo Now
-            </a>
-            <div class="text-gray-500 text-sm">
-                <p>&copy; 2026 Crafted by JD | For the True Power Users.</p>
-                <p class="mt-2 text-xs">No APIs needed. Just raw Kotlin power.</p>
-            </div>
-        </div>
+    <footer class="text-center py-8 border-t border-gray-800 text-gray-500 mt-10 glass-panel">
+        <p>&copy; 2026 Developed by <span class="font-bold text-white">JD</span> | All Rights Reserved.</p>
     </footer>
 
-    <!-- Heavy Artillery Scripts: GSAP & Atropos Setup -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://unpkg.com/atropos@2.0.2/atropos.min.js"></script>
+    <!-- Scripts for 3D and Animations -->
+    <!-- Three.js (Required for Vanta) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <!-- Vanta.js NET effect -->
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <!-- AOS Animation -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Vanilla Tilt 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
 
     <script>
-        // Initialize 3D Atropos for ALL cards and buttons
-        document.querySelectorAll('.my-atropos, .btn-atropos').forEach((el) => {
-            Atropos({
-                el: el,
-                activeOffset: 40,
-                shadowScale: 1.05,
-                highlight: true,
-                rotateXMax: 15,
-                rotateYMax: 15
-            });
+        // Initialize 3D Background Effect
+        VANTA.NET({
+            el: "#vanta-canvas",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0xff0055,
+            backgroundColor: 0x050505,
+            points: 12.00,
+            maxDistance: 22.00,
+            spacing: 18.00
         });
 
-        // GSAP Cinema-Level Scroll Animations
-        gsap.registerPlugin(ScrollTrigger);
-
-        // Hero Animation
-        gsap.from(".hero-content", {
-            y: 100,
-            opacity: 0,
-            duration: 1.5,
-            ease: "power4.out"
+        // Initialize Scroll Animations
+        AOS.init({
+            once: true,
+            offset: 100,
         });
 
-        // Features Staggered Entry
-        gsap.from(".feature-card", {
-            scrollTrigger: {
-                trigger: "#features",
-                start: "top 80%",
-            },
-            y: 100,
-            opacity: 0,
-            duration: 1,
-            stagger: 0.15,
-            ease: "back.out(1.7)"
-        });
-
-        // Tech Details Entry
-        gsap.from(".tech-text", {
-            scrollTrigger: {
-                trigger: ".tech-text",
-                start: "top 85%",
-            },
-            x: -100,
-            opacity: 0,
-            duration: 1,
-            ease: "power3.out"
-        });
-
-        gsap.from(".terminal-block", {
-            scrollTrigger: {
-                trigger: ".tech-text",
-                start: "top 85%",
-            },
-            x: 100,
-            opacity: 0,
-            duration: 1,
-            ease: "power3.out"
+        // Initialize 3D Card Hover Effects
+        VanillaTilt.init(document.querySelectorAll(".tilt-card"), {
+            max: 15,
+            speed: 400,
+            glare: true,
+            "max-glare": 0.2,
         });
     </script>
 </body>
