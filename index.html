@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shs-tube-v2 | Next-Gen Media & Torrent Downloader</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* CSS Reset & Variables */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --glass-bg: rgba(25, 25, 35, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary-glow: #ff0055;
+            --secondary-glow: #00d2ff;
+        }
+
+        /* Animated Dark Background */
+        body {
+            background: #0f0f13;
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: radial-gradient(circle at 15% 50%, rgba(255, 0, 85, 0.15), transparent 25%),
+                        radial-gradient(circle at 85% 30%, rgba(0, 210, 255, 0.15), transparent 25%);
+            animation: bgShift 10s infinite alternate linear;
+        }
+
+        @keyframes bgShift {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.2); }
+        }
+
+        /* Navbar */
+        nav {
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 15, 19, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #ff0055, #00d2ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 100px 20px 50px;
+            perspective: 1000px;
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #ccc;
+            max-width: 600px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* Download Buttons 3D */
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-github {
+            background: linear-gradient(135deg, #2b2b2b, #1a1a1a);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .btn-apk {
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            box-shadow: 0 10px 20px rgba(0, 210, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 25px rgba(255,255,255,0.1);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Glassmorphism Features Section */
+        .features {
+            padding: 80px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
+            transform: skewX(-20deg);
+            transition: 0.5s;
+        }
+
+        .feature-card:hover::before {
+            left: 150%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) translateZ(20px) rotateX(5deg) rotateY(5deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(255,0,85,0.2);
+            border-color: rgba(255, 0, 85, 0.4);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ff0055, #00d2ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0,0,0,0.5);
+            border-top: 1px solid var(--glass-border);
+            margin-top: 50px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.8rem; }
+            nav { padding: 15px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animation"></div>
+
+    <nav>
+        <h1>shs-tube-v2</h1>
+        <div style="font-size: 1.5rem;">
+            <i class="fab fa-github" style="cursor: pointer;"></i>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1 class="hero-title">The Ultimate<br>Downloader Engine</h1>
+        <p class="hero-subtitle">SnapTube meets Netflix. Blazing fast yt-dlp integrations, unrestricted jlibtorrent engine, and a stunning 3D Glassmorphism Dark UI.</p>
+        
+        <div class="btn-container">
+            <!-- GitHub Release Link (Update with your actual repo link) -->
+            <a href="https://github.com/The-JDdev/shs-tube-v2/releases/latest" class="btn btn-github">
+                <i class="fab fa-github"></i> Download from GitHub
+            </a>
+            <!-- APKPure Link (Update when available) -->
+            <a href="#" class="btn btn-apk">
+                <i class="fas fa-download"></i> Download via APKPure
+            </a>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="feature-card">
+            <i class="fas fa-bolt feature-icon"></i>
+            <h3>yt-dlp Powered Engine</h3>
+            <p>Bypass PO Tokens and DRM blocks. Fetch 1080p, 4K, and 8K formats perfectly from YouTube, Insta, Facebook, and more.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-magnet feature-icon"></i>
+            <h3>Blazing Torrent Engine</h3>
+            <p>Powered by ultra-fast jlibtorrent. Magnet links and .torrent files parse and download at maximum bandwidth without crashes.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-layer-group feature-icon"></i>
+            <h3>SnapTube-style Overlay</h3>
+            <p>Share any link and a transparent BottomSheet pops up instantly over your current app. No more full-app interruptions.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-film feature-icon"></i>
+            <h3>Netflix-style Dark UI</h3>
+            <p>A sleek, modern Material 3 design featuring deep dark modes, glassmorphism elements, and smooth cinematic animations.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-broom feature-icon"></i>
+            <h3>Smart Storage Cleaner</h3>
+            <p>One-click junk cleaner that automatically scans and wipes out temporary .part files, caches, and yt-dlp leftovers.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-browser feature-icon"></i>
+            <h3>Built-in AdBlock Browser</h3>
+            <p>Seamless web browsing without the annoying ads. Just long-press any video or image on the web to start downloading instantly.</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 Developed by JD | Next-Gen Media Solutions</p>
+    </footer>
+
+    <!-- Vanilla JS for 3D Tilt Effect on Cards -->
+    <script>
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                let rect = card.getBoundingClientRect();
+                let x = e.clientX - rect.left; 
+                let y = e.clientY - rect.top;
+                
+                let centerX = rect.width / 2;
+                let centerY = rect.height / 2;
+                
+                let rotateX = ((y - centerY) / centerY) * -10;
+                let rotateY = ((x - centerX) / centerX) * 10;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            });
+        });
+    </script>
+</body>
+</html>
