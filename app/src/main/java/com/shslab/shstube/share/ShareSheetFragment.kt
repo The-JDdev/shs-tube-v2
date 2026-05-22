@@ -146,6 +146,9 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
                 addOption("--dump-single-json")
                 addOption("--no-playlist")
                 addOption("--skip-download")
+                addOption("--user-agent", DownloadService.USER_AGENT)
+                addOption("--extractor-args", "youtube:player_client=ios,web")
+                addOption("--geo-bypass")
             }
             val resp = YoutubeDL.getInstance().execute(req)
             val out = resp.out

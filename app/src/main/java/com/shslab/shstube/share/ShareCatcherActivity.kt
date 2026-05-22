@@ -2,7 +2,6 @@ package com.shslab.shstube.share
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import com.shslab.shstube.ShsTubeApp
@@ -77,30 +76,35 @@ class ShareCatcherActivity : FragmentActivity() {
         return try {
             val req = com.yausername.youtubedl_android.YoutubeDLRequest(url).apply {
                 addOption("--flat-playlist")
+                addOption("--dump-single-json")
                 addOption("--skip-download")
                 addOption("--no-warnings")
                 addOption("--extractor-args", "youtube:player_client=ios,web")
             }
-            val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
-            val entries = info.formats ?: emptyList()
-            if(entries.isEmpty()) return null
-            if (entries.size <= 1) return null
+            val resp = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(req)
+            val out = resp.out ?: return null
+            val json = org.json.JSONObject(out)
+            val entries = json.optJSONArray("entries") ?: return null
+            if (entries.length() <= 1) return null
             val urls = mutableListOf<String>()
             val titles = mutableListOf<String>()
             val metas = mutableListOf<String>()
-            for (e in entries.take(50)) {
-                val u = e.url ?: e.url ?: continue
-                val abs = if (u.toString().startsWith("http")) u else "https://www.youtube.com/watch?v=$u"
+            for (i in 0 until minOf(entries.length(), 50)) {
+                val e = entries.optJSONObject(i) ?: continue
+                val raw = e.optString("url").ifBlank { e.optString("webpage_url") }
+                if (raw.isBlank()) continue
+                val abs = if (raw.startsWith("http", true)) raw else "https://www.youtube.com/watch?v=$raw"
                 urls += abs
-                titles += (e.formatId ?: "")
-                val durStr = e.fileSize.toString()?.toLong()?.takeIf { it.toLong() > 0L }?.let { d ->
-                    val m = d / 60; val s = d % 60; "%d:%02d".format(m, s)
-                }.orEmpty()
-                val upl = e.ext.orEmpty()
-                metas += listOf(durStr, upl).filter { it.toString().isNotBlank() }.joinToString(" • ")
+                titles += e.optString("title").ifBlank { "Item ${i + 1}" }
+                val dur = e.optLong("duration", 0L)
+                val durStr = if (dur > 0) {
+                    val m = dur / 60; val sec = dur % 60; "%d:%02d".format(m, sec)
+                } else ""
+                val uploader = e.optString("uploader").ifBlank { e.optString("channel") }
+                metas += listOf(durStr, uploader).filter { it.isNotBlank() }.joinToString(" • ")
             }
             if (urls.size <= 1) null
-            else Multi(info.title.orEmpty(), urls, titles, metas)
+            else Multi(json.optString("title", ""), urls, titles, metas)
         } catch (t: Throwable) {
             com.shslab.shstube.util.DevLog.warn("share", "detectMultiEntries failed: ${t.message?.take(80)}")
             null
@@ -196,16 +200,48 @@ class ShareCatcherActivity : FragmentActivity() {
         }
     }
 
-    /** Pull the first http(s)/magnet URL out of share text (which often contains description). */
+    /** Pull a usable URL/content URI from share/view intents. */
     private fun extractUrl(intent: Intent?): String? {
         if (intent == null) return null
-        val raw: String? = when (intent.action) {
-            Intent.ACTION_SEND -> intent.getStringExtra(Intent.EXTRA_TEXT)
-            Intent.ACTION_VIEW -> intent.dataString
-            else -> null
+
+        // 1) Direct VIEW intents (browser/magnet)
+        intent.dataString?.let { direct ->
+            if (direct.startsWith("http://", true) ||
+                direct.startsWith("https://", true) ||
+                direct.startsWith("magnet:", true) ||
+                direct.startsWith("content://", true) ||
+                direct.startsWith("file://", true)
+            ) return direct
         }
-        val text = raw ?: return null
-        return Regex("""(?:https?://|magnet:\?)\S+""").find(text)?.value
+
+        // 2) Shared plain text containing one or more links
+        val textCandidates = mutableListOf<String>()
+        intent.getStringExtra(Intent.EXTRA_TEXT)?.let { textCandidates += it }
+        intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()?.let { textCandidates += it }
+        intent.getCharSequenceExtra(Intent.EXTRA_SUBJECT)?.toString()?.let { textCandidates += it }
+        val link = textCandidates
+            .asSequence()
+            .mapNotNull { Regex("""(?:https?://|magnet:\?)\S+""").find(it)?.value }
+            .firstOrNull()
+        if (!link.isNullOrBlank()) return link
+
+        // 3) File/content shares (.torrent and similar) from EXTRA_STREAM
+        intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)?.toString()?.let { return it }
+
+        val streams = intent.getParcelableArrayListExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+        if (!streams.isNullOrEmpty()) return streams.firstOrNull()?.toString()
+
+        // 4) Fallback ClipData from some OEM share sheets
+        val clip = intent.clipData
+        if (clip != null && clip.itemCount > 0) {
+            val uri = clip.getItemAt(0)?.uri?.toString()
+            if (!uri.isNullOrBlank()) return uri
+            val t = clip.getItemAt(0)?.text?.toString()
+            if (!t.isNullOrBlank()) {
+                return Regex("""(?:https?://|magnet:\?)\S+""").find(t)?.value ?: t
+            }
+        }
+        return null
     }
 
     fun onSheetClosed() {

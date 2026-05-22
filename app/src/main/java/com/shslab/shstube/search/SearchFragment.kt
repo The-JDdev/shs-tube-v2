@@ -216,22 +216,25 @@ class SearchFragment : Fragment() {
                         addOption("--skip-download")
                         addOption("--user-agent", com.shslab.shstube.service.DownloadService.USER_AGENT)
                     }
-                    val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
-                    val entries = info.formats ?: emptyList()
-                    for (e in entries.take(50)) {
-                        val rawU = e.url ?: e.url ?: continue
-                        val absUrl = if (rawU.toString().startsWith("http")) rawU else "https://www.youtube.com/watch?v=$rawU"
-                        // Prefer yt-dlp thumbnail field; fall back to ytimg CDN from video ID
-                        val thumbUrl = e.url?.takeIf { t -> t.toString().startsWith("http") }
-                            ?: Regex("[?&]v=([A-Za-z0-9_-]{11})").find(absUrl)?.groupValues?.getOrNull(1)
-                                ?.let { vid -> "https://i.ytimg.com/vi/$vid/hqdefault.jpg" }
-                            ?: ""
+                    val resp = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(req)
+                    val out = resp.out ?: ""
+                    val json = org.json.JSONObject(out)
+                    val entries = json.optJSONArray("entries") ?: org.json.JSONArray()
+                    for (i in 0 until minOf(entries.length(), 50)) {
+                        val e = entries.optJSONObject(i) ?: continue
+                        val rawU = e.optString("webpage_url").ifBlank { e.optString("url") }
+                        if (rawU.isBlank()) continue
+                        val absUrl = if (rawU.startsWith("http", true)) rawU else "https://www.youtube.com/watch?v=$rawU"
+                        val thumbUrl = e.optString("thumbnail").ifBlank {
+                            Regex("[?&]v=([A-Za-z0-9_-]{11})").find(absUrl)?.groupValues?.getOrNull(1)
+                                ?.let { vid -> "https://i.ytimg.com/vi/$vid/hqdefault.jpg" } ?: ""
+                        }
                         hits += SearchHit(
                             kind = HitKind.Video,
-                            title = e.formatId ?: "(no title)",
+                            title = e.optString("title").ifBlank { "(no title)" },
                             url = absUrl,
-                            uploader = e.ext ?: "",
-                            duration = formatDuration(e.fileSize.toString()?.toLong() ?: 0L),
+                            uploader = e.optString("uploader").ifBlank { e.optString("channel") },
+                            duration = formatDuration(e.optLong("duration", 0L)),
                             thumbnailUrl = thumbUrl
                         )
                     }
