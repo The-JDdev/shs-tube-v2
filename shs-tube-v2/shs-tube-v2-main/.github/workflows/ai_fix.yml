@@ -1,0 +1,46 @@
+name: JD AI Auto Fixer
+on: [workflow_dispatch]
+jobs:
+  fix-repo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install Aider
+        run: pip install aider-chat
+        
+      - name: AI Auto Fix
+        env:
+          OPENAI_API_BASE: "https://api.souimagery.fun/v1"
+          OPENAI_API_KEY: ${{ secrets.AI_KEY }}
+        run: |
+          git config --global user.name "JD-AI-Bot"
+          git config --global user.email "bot@jd.com"
+          
+          cat << 'EOF' > instruction.txt
+          [CRITICAL SYSTEM OVERRIDE: YOU ARE THE NEW LEAD ARCHITECT]
+
+          Project: shs-tube-v2 — A Next-Gen Media & Torrent Downloader Android App.
+          
+          Review the repository, fix any Kotlin syntax errors, update deprecated APIs,
+          and ensure all features work correctly. Focus on:
+          1. Correct thread usage (never call WebView methods from background threads)
+          2. Proper error handling in coroutines
+          3. Up-to-date API usage for AndroidX libraries
+          4. No compile errors
+          EOF
+          
+          aider --model claude-sonnet-4-20250514 --yes --message-file instruction.txt
+          
+          rm instruction.txt
+          git add .
+          git commit -m "Auto-Architecture Update: Bug fixes and dependency updates" || echo "No changes to commit"
+          git push

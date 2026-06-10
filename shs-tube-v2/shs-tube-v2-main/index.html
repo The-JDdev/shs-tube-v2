@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shs-tube-v2 | The Ultimate Media & Torrent Engine</title>
+    
+    <!-- Tailwind CSS (CDN for quick setup) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config for Custom Colors & Glassmorphism -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        brandDark: '#0a0a0c',
+                        brandRed: '#E50914',
+                        brandBlue: '#00d2ff',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow-x: hidden; background-color: #0a0a0c; color: white; }
+        /* Three.js Canvas Fixed Background */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
+        
+        /* Custom Glass Class */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #E50914, #ff4d4d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0c; }
+        ::-webkit-scrollbar-thumb { background: #E50914; border-radius: 4px; }
+    </style>
+</head>
+<body class="antialiased selection:bg-brandRed selection:text-white">
+
+    <!-- 3D Background Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass-panel border-b border-white/10 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-black tracking-widest uppercase">
+                shs<span class="text-brandRed">-</span>tube<span class="text-brandBlue">v2</span>
+            </h1>
+            <div class="hidden md:flex gap-6 font-semibold text-sm tracking-wider">
+                <a href="#features" class="hover:text-brandRed transition-colors">FEATURES</a>
+                <a href="#download" class="hover:text-brandRed transition-colors">DOWNLOAD</a>
+                <a href="#connect" class="hover:text-brandRed transition-colors">CONNECT</a>
+            </div>
+            <a href="https://github.com/The-JDdev/shs-tube-v2" target="_blank" class="text-2xl hover:text-brandBlue transition-transform hover:scale-110">
+                <i class="fab fa-github"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-20 px-6">
+        <div class="max-w-5xl mx-auto text-center z-10 gs-reveal">
+            <div class="inline-block px-4 py-1 rounded-full glass-panel text-brandBlue text-sm font-bold tracking-widest mb-6 border-brandBlue/30 shadow-[0_0_15px_rgba(0,210,255,0.2)]">
+                🚀 THE NEW STANDARD IS HERE
+            </div>
+            <h1 class="text-6xl md:text-8xl font-black mb-6 leading-tight drop-shadow-2xl">
+                Unleash The <br> <span class="text-gradient">Ultimate Engine</span>
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-3xl mx-auto font-light">
+                Forget ordinary downloaders. <strong>shs-tube-v2</strong> is a hyper-optimized beast. 
+                Combining SnapTube's overlay magic, Netflix's premium dark UI, and jlibtorrent's unlimited power into one flawless Android experience.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-6">
+                <a href="https://github.com/The-JDdev/shs-tube-v2/releases/latest" class="group relative px-8 py-4 bg-brandRed text-white font-bold rounded-full overflow-hidden shadow-[0_0_30px_rgba(229,9,20,0.4)] hover:shadow-[0_0_50px_rgba(229,9,20,0.6)] transition-all">
+                    <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                    <span class="relative flex items-center justify-center gap-2">
+                        <i class="fab fa-github text-xl"></i> Get Latest Release
+                    </span>
+                </a>
+                <a href="#apkpure" class="px-8 py-4 glass-panel border border-white/20 hover:border-brandBlue/50 text-white font-bold rounded-full hover:bg-white/5 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-download text-brandBlue"></i> Download via APKPure
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deep Dive Features (10 Pillars) -->
+    <section id="features" class="py-24 px-6 relative z-10">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 gs-reveal">
+                <h2 class="text-4xl md:text-5xl font-black mb-4">The <span class="text-brandBlue">10 Pillars</span> of Power</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">Architected perfectly. No syntax errors, no dead zones, just pure performance.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-brandRed/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-brandRed/20 flex items-center justify-center mb-6 text-brandRed text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-browser"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Flawless AdBlock Browser</h3>
+                    <p class="text-gray-400">Zero dead zones. Browse cleanly, bypass stupid blocks, and use the 'Long-press to download' feature for instant media grabs directly from the web view.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-brandBlue/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-brandBlue/20 flex items-center justify-center mb-6 text-brandBlue text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">True SnapTube Overlay</h3>
+                    <p class="text-gray-400">Share a link from Facebook or YouTube and watch the magic. A transparent BottomSheet appears over your current app—no full app launches, zero interruptions.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-white/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6 text-white text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fab fa-youtube"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Ultimate yt-dlp Bypass</h3>
+                    <p class="text-gray-400">Wired with `youtube:player_client=ios,web` args. It crushes PO Tokens & DRM blocks to fetch EVERY format (1080p, 4K, Audio) flawlessly. No more "audio only" limitations.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-green-500/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-green-500/20 flex items-center justify-center mb-6 text-green-500 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-magnet"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Blazing jlibtorrent Engine</h3>
+                    <p class="text-gray-400">The Torrent Dead Zone is gone. Replaced laggy engines with high-speed jlibtorrent. Magnet links and .torrent files now parse and download at absolute maximum bandwidth.</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-purple-500/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center mb-6 text-purple-500 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fab fa-instagram"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Carousel Multi-Download</h3>
+                    <p class="text-gray-400">Shared an Insta post with 5 videos? Our custom UI lets you select specific items (1, 3, 5) or hit "Download All" instantly.</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-brandRed/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-brandRed/20 flex items-center justify-center mb-6 text-brandRed text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Pro File Manager</h3>
+                    <p class="text-gray-400">Multi-select running or finished files to Cancel, Delete, or Share them all at once. Plus, rename on the fly. Full control.</p>
+                </div>
+
+                 <!-- Feature 7 -->
+                 <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-yellow-500/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-yellow-500/20 flex items-center justify-center mb-6 text-yellow-500 text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-broom"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">1-Click Junk Cleaner</h3>
+                    <p class="text-gray-400">A powerful deep-scan button that wipes out temp files, caches, .part files, and yt-dlp leftovers to instantly free up your phone storage.</p>
+                </div>
+
+                <!-- Feature 8 -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-brandBlue/50 transition-all duration-300 group gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-brandBlue/20 flex items-center justify-center mb-6 text-brandBlue text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-share-nodes"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Direct Web Share</h3>
+                    <p class="text-gray-400">Share any random website link, and the app instantly auto-detects media to pop up the download sheet or opens the built-in browser smoothly.</p>
+                </div>
+
+                <!-- Feature 9 & 10 Combined for impact -->
+                <div class="glass-panel p-8 rounded-3xl hover:-translate-y-2 hover:border-white/50 transition-all duration-300 group md:col-span-2 lg:col-span-1 gs-reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-6 text-white text-2xl group-hover:scale-110 transition-transform">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Netflix-Style Premium UI</h3>
+                    <p class="text-gray-400">We nuked the boring logs and built a 100% bug-free, modern Material 3 Dark UI. Complete with glassmorphism, fluid animations, and flawless Kotlin execution. No silly syntax errors.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Connect & Donation Section -->
+    <section id="connect" class="py-24 px-6 relative z-10 border-t border-white/10 bg-brandDark/50">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16">
+            
+            <!-- Connect Info -->
+            <div class="gs-reveal">
+                <h2 class="text-4xl font-black mb-8 border-l-4 border-brandRed pl-4">Connect With JD</h2>
+                <p class="text-gray-400 mb-8 font-light">Got a feature request, bug report, or business inquiry? Hit me up on the socials below. I'm always active.</p>
+                
+                <div class="space-y-4">
+                    <a href="mailto:thejddev.official@gmail.com" class="flex items-center gap-4 glass-panel p-4 rounded-xl hover:bg-white/5 transition-colors">
+                        <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-xl"><i class="fas fa-envelope"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">Mail FC</p>
+                            <p class="font-semibold">thejddev.official@gmail.com</p>
+                        </div>
+                    </a>
+                    <a href="https://t.me/aamoviesofficial" target="_blank" class="flex items-center gap-4 glass-panel p-4 rounded-xl hover:bg-white/5 transition-colors">
+                        <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500 text-xl"><i class="fab fa-telegram-plane"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">Telegram</p>
+                            <p class="font-semibold">@aamoviesofficial</p>
+                        </div>
+                    </a>
+                    <a href="https://facebook.com/itsshsshobuj" target="_blank" class="flex items-center gap-4 glass-panel p-4 rounded-xl hover:bg-white/5 transition-colors">
+                        <div class="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-600 text-xl"><i class="fab fa-facebook-f"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">Facebook</p>
+                            <p class="font-semibold">itsshsshobuj</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Donation Info -->
+            <div class="gs-reveal">
+                <h2 class="text-4xl font-black mb-8 border-l-4 border-brandBlue pl-4">Support The Lab</h2>
+                <p class="text-gray-400 mb-8 font-light">Maintaining repos, APIs, and writing flawless code takes fuel. If you love the app, drop a tip. Every bit keeps the engine running!</p>
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="glass-panel p-5 rounded-xl border border-white/10 flex justify-between items-center group">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-wallet text-2xl text-gray-300"></i>
+                            <div>
+                                <p class="text-xs text-gray-400 font-bold tracking-wider">WebMoney (WMT)</p>
+                                <p class="font-mono text-lg font-bold">T202226490170</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel p-5 rounded-xl border border-white/10 flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            <i class="fas fa-wallet text-2xl text-blue-400"></i>
+                            <div>
+                                <p class="text-xs text-gray-400 font-bold tracking-wider">WebMoney (WMZ)</p>
+                                <p class="font-mono text-lg font-bold">Z430378899900</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-xl border border-white/10 flex justify-between items-center border-l-4 border-l-pink-500">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center text-white text-xs font-bold">৳</div>
+                            <div>
+                                <p class="text-xs text-gray-400 font-bold tracking-wider">bKash (BD)</p>
+                                <p class="font-mono text-lg font-bold text-pink-500">01310211442</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="py-8 text-center text-gray-500 text-sm border-t border-white/10 glass-panel mt-10">
+        <p>&copy; 2026 Developed with <i class="fas fa-fire text-brandRed mx-1"></i> by <strong>JD</strong> | shs-tube-v2 Open Source</p>
+    </footer>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <!-- GSAP for scroll animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        // --- 1. THREE.JS 3D BACKGROUND LOGIC ---
+        const init3D = () => {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            // Dark fog to blend particles smoothly
+            scene.fog = new THREE.FogExp2(0x0a0a0c, 0.001);
+
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.z = 500;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Create particles
+            const geometry = new THREE.BufferGeometry();
+            const particlesCount = 1500;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 2000;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            // Custom glowing material
+            const material = new THREE.PointsMaterial({
+                size: 3,
+                color: 0x00d2ff,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+
+            const particlesMesh = new THREE.Points(geometry, material);
+            scene.add(particlesMesh);
+
+            // Mouse interaction logic
+            let mouseX = 0;
+            let mouseY = 0;
+            document.addEventListener('mousemove', (event) => {
+                mouseX = event.clientX / window.innerWidth - 0.5;
+                mouseY = event.clientY / window.innerHeight - 0.5;
+            });
+
+            // Animation Loop
+            const animate = () => {
+                requestAnimationFrame(animate);
+                
+                // Slow rotation
+                particlesMesh.rotation.y += 0.001;
+                particlesMesh.rotation.x += 0.0005;
+
+                // Parallax effect on mouse move
+                particlesMesh.rotation.y += mouseX * 0.05;
+                particlesMesh.rotation.x += mouseY * 0.05;
+
+                // Color shift logic based on time
+                const time = Date.now() * 0.0005;
+                material.color.setHSL((Math.sin(time) * 0.1) + 0.9, 0.8, 0.5); // Shifts around Red/Pink/Blue
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            // Resize handler
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+        // --- 2. GSAP SCROLL ANIMATIONS ---
+        const initGSAP = () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Navbar backdrop blur effect on scroll
+            window.addEventListener("scroll", () => {
+                const nav = document.getElementById("navbar");
+                if (window.scrollY > 50) {
+                    nav.classList.add("bg-brandDark/80", "shadow-lg");
+                } else {
+                    nav.classList.remove("bg-brandDark/80", "shadow-lg");
+                }
+            });
+
+            // Reveal elements on scroll
+            const revealElements = document.querySelectorAll('.gs-reveal');
+            revealElements.forEach((el) => {
+                gsap.fromTo(el, 
+                    { y: 50, opacity: 0 },
+                    { 
+                        y: 0, 
+                        opacity: 1, 
+                        duration: 1, 
+                        ease: "power3.out",
+                        scrollTrigger: {
+                            trigger: el,
+                            start: "top 85%", // Triggers when top of element hits 85% of viewport
+                            toggleActions: "play none none reverse"
+                        }
+                    }
+                );
+            });
+        };
+
+        // Initialize everything when DOM is ready
+        document.addEventListener("DOMContentLoaded", () => {
+            init3D();
+            initGSAP();
+        });
+    </script>
+</body>
+</html>

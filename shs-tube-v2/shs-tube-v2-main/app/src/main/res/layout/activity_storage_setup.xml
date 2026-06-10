@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:padding="28dp"
+    android:background="@color/bg_primary">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SHS Tube"
+        android:textColor="@color/brand_orange"
+        android:textSize="34sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome — where should we save your downloads?"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:layout_marginTop="20dp" />
+
+    <TextView android:id="@+id/path_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp"
+        android:gravity="center"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="32dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_internal"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Internal Storage  —  Downloads/SHSTube"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        app:backgroundTint="@color/brand_orange"
+        android:layout_marginVertical="6dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_saf"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="SD Card / Custom folder…"
+        android:textAllCaps="false"
+        android:textSize="15sp"
+        android:textColor="@color/text_primary"
+        app:strokeColor="@color/brand_orange"
+        android:layout_marginVertical="6dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_skip"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Skip — decide later"
+        android:textColor="@color/text_muted"
+        android:textAllCaps="false"
+        android:layout_marginTop="14dp" />
+</LinearLayout>

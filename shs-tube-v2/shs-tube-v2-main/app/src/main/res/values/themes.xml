@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design 3 base theme — uses material:1.11.0 M3 styles -->
+    <style name="Theme.ShsTube" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_orange</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/brand_orange_dark</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <item name="colorSecondary">@color/brand_accent</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorTertiary">@color/brand_blue</item>
+        <item name="colorOnTertiary">@color/white</item>
+        <item name="colorSurface">@color/bg_surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/bg_elevated</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/divider</item>
+        <item name="colorError">@color/error</item>
+        <item name="android:colorBackground">@color/bg_primary</item>
+        <item name="android:statusBarColor">@color/bg_primary</item>
+        <item name="android:navigationBarColor">@color/bg_primary</item>
+        <item name="android:windowBackground">@color/bg_primary</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.ShsTube.BottomSheet</item>
+    </style>
+
+    <!-- BULLETPROOF Snaptube-style translucent overlay theme.
+         The previous activity background MUST stay visible; we only show our BottomSheet.
+         Defensive: every attribute that could possibly paint a background is forced to
+         transparent / disabled. backgroundDim is OFF so the user's previous app remains
+         clearly visible behind our sheet (Snaptube does the same). -->
+    <style name="Theme.ShsTube.Translucent" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="colorSurface">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.ShsTube.BottomSheet</item>
+    </style>
+
+    <style name="ThemeOverlay.ShsTube.BottomSheet" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.ShsTube.BottomSheet</item>
+    </style>
+
+    <style name="Widget.ShsTube.BottomSheet" parent="Widget.Material3.BottomSheet">
+        <item name="backgroundTint">@color/bg_surface</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.ShsTube.LargeComponent</item>
+    </style>
+
+    <style name="ShapeAppearance.ShsTube.LargeComponent" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">22dp</item>
+        <item name="cornerSizeTopRight">22dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+</resources>
