@@ -130,6 +130,28 @@ class FormatSheet : BottomSheetDialogFragment() {
                 }
             }
 
+            // Attempt 3: If still failed, try with mweb client (mobile web — least restrictive)
+            if (info == null) {
+                try {
+                    tvTitle.text = "Retrying with mobile web..."
+                    info = withContext(Dispatchers.IO) {
+                        val req = YoutubeDLRequest(url).apply {
+                            addOption("--user-agent", DownloadService.USER_AGENT)
+                            addOption("--extractor-args", "youtube:player_client=mweb,web")
+                            addOption("--geo-bypass")
+                            addOption("--no-playlist")
+                            addOption("--no-warnings")
+                            addOption("--retries", "5")
+                        }
+                        YoutubeDL.getInstance().getInfo(req)
+                    }
+                    lastError = null
+                } catch (t: Throwable) {
+                    lastError = t
+                    com.shslab.shstube.util.DevLog.warn("yt-dlp", "FormatSheet attempt 3 failed: ${t.message?.take(100)}")
+                }
+            }
+
             if (info != null) {
                 val list = info.formats ?: emptyList()
                 val rows = list.mapNotNull { f -> toRow(f) }

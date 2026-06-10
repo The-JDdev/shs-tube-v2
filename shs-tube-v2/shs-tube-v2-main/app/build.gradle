@@ -12,8 +12,8 @@ android {
         applicationId "com.shslab.shstube"
         minSdk 24
         targetSdk 35
-        versionCode 38
-        versionName "2.5.0-ytfix"
+        versionCode 39
+        versionName "2.6.0"
         vectorDrawables.useSupportLibrary = true
 
         // Universal APK - ship every ABI
@@ -80,7 +80,7 @@ dependencies {
 
     // Core AndroidX
     implementation 'androidx.core:core-ktx:1.16.0'
-    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
@@ -105,16 +105,16 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
     // youtubedl-android: yt-dlp packaged as AAR
-    // 0.17.6 bundles yt-dlp 2025.x with latest anti-bot workarounds + PO token fixes
-    implementation 'io.github.junkfood02.youtubedl-android:library:0.17.6'
-    implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.17.6'
+    // 0.18.1 bundles latest yt-dlp 2026.x with PO token fixes + anti-bot workarounds
+    implementation 'io.github.junkfood02.youtubedl-android:library:0.18.1'
+    implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1'
 
     // libtorrent4j - universal: all 4 ABIs
-    implementation 'org.libtorrent4j:libtorrent4j:2.1.0-32'
-    implementation 'org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-32'
-    implementation 'org.libtorrent4j:libtorrent4j-android-arm:2.1.0-32'
-    implementation 'org.libtorrent4j:libtorrent4j-android-x86:2.1.0-32'
-    implementation 'org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-32'
+    implementation 'org.libtorrent4j:libtorrent4j:2.1.0-39'
+    implementation 'org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-39'
+    implementation 'org.libtorrent4j:libtorrent4j-android-arm:2.1.0-39'
+    implementation 'org.libtorrent4j:libtorrent4j-android-x86:2.1.0-39'
+    implementation 'org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-39'
 
     // NewPipe Extractor - v0.24.6 fixes YouTube search (ContentNotAvailableException, Deblocking)
     implementation 'com.github.TeamNewPipe:NewPipeExtractor:v0.24.6'

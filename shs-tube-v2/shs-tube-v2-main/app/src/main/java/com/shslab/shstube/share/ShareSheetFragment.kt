@@ -155,6 +155,13 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
         // Attempt 2: tv + web (fallback - different auth path)
         com.shslab.shstube.util.DevLog.info("yt-dlp", "ShareSheet retrying with tv+web client for $targetUrl")
         result = fetchFormatsAttempt(targetUrl, "youtube:player_client=tv,web")
+        if (result.first.isNotBlank() || result.second.isNotEmpty() || result.third.isNotEmpty()) {
+            return result
+        }
+
+        // Attempt 3: mweb + web (mobile web — least restrictive)
+        com.shslab.shstube.util.DevLog.info("yt-dlp", "ShareSheet retrying with mweb+web client for $targetUrl")
+        result = fetchFormatsAttempt(targetUrl, "youtube:player_client=mweb,web")
         return result
     }
 

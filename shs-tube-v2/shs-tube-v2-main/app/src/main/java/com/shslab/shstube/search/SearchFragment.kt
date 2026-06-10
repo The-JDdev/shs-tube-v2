@@ -133,8 +133,22 @@ class SearchFragment : Fragment() {
                 if (!ShsTubeApp.ytDlpReady) {
                     ShsTubeApp.awaitYtDlpReady(timeoutMs = 30_000)
                 }
-                val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(hit.url)
-                val direct = info.url ?: info.formats?.firstOrNull { (it.vcodec ?: "") != "none" }?.url
+                // FIX v2.6: Must pass --extractor-args and --user-agent to getInfo()
+                // or YouTube URLs will fail with PO token / Sign in to confirm errors.
+                val req = com.yausername.youtubedl_android.YoutubeDLRequest(hit.url).apply {
+                    addOption("--user-agent", com.shslab.shstube.service.DownloadService.USER_AGENT)
+                    addOption("--extractor-args", "youtube:player_client=ios,web")
+                    addOption("--geo-bypass")
+                    addOption("--no-playlist")
+                    addOption("--no-warnings")
+                }
+                val info = com.yausername.youtubedl_android.YoutubeDL.getInstance().getInfo(req)
+                // Try to get a direct playable URL from the info
+                val direct = info.formats
+                    ?.filter { (it.vcodec ?: "none") != "none" && it.url != null }
+                    ?.maxByOrNull { it.height ?: 0 }
+                    ?.url
+                    ?: info.url
                 if (direct.isNullOrBlank()) {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(requireContext(), "No playable stream resolved", Toast.LENGTH_LONG).show()
@@ -149,6 +163,7 @@ class SearchFragment : Fragment() {
                     startActivity(intent)
                 }
             } catch (t: Throwable) {
+                com.shslab.shstube.util.DevLog.error("search", t, extra = "openPlayer failed url=${hit.url}")
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         requireContext(),
@@ -275,11 +290,28 @@ class SearchFragment : Fragment() {
      * Uses --flat-playlist + --dump-single-json to get the list of entries,
      * then parses each entry's id/title/duration from the JSON.
      *
-     * CRITICAL FIX: Uses `--extractor-args "youtube:player_client=ios,web"`
+     * CRITICAL FIX v2.6: Uses `--extractor-args "youtube:player_client=ios,web"`
      * to bypass PO token / DRM checks that block the default android client.
      * Also adds --no-warnings to avoid stderr noise parsing issues.
+     * Added fallback attempt with mweb client if ios+web fails.
      */
     private fun searchViaYtDlp(query: String): List<SearchHit> {
+        val hits = mutableListOf<SearchHit>()
+        try {
+            // Attempt 1: ios + web client
+            hits.addAll(searchViaYtDlpAttempt(query, "youtube:player_client=ios,web"))
+            if (hits.isNotEmpty()) return hits
+
+            // Attempt 2: mweb + web client (mobile web — less restrictive)
+            com.shslab.shstube.util.DevLog.info("search", "yt-dlp search retrying with mweb+web for '$query'")
+            hits.addAll(searchViaYtDlpAttempt(query, "youtube:player_client=mweb,web"))
+        } catch (t: Throwable) {
+            com.shslab.shstube.util.DevLog.error("search", t, extra = "searchViaYtDlp failed q=$query")
+        }
+        return hits
+    }
+
+    private fun searchViaYtDlpAttempt(query: String, extractorArgs: String): List<SearchHit> {
         val hits = mutableListOf<SearchHit>()
         try {
             val req = com.yausername.youtubedl_android.YoutubeDLRequest("ytsearch20:$query").apply {
@@ -288,11 +320,9 @@ class SearchFragment : Fragment() {
                 addOption("--no-playlist")
                 addOption("--skip-download")
                 addOption("--no-warnings")
-                // ios client bypasses PO Token + DRM checks; web as fallback for formats
-                addOption("--extractor-args", "youtube:player_client=ios,web")
+                addOption("--extractor-args", extractorArgs)
                 addOption("--user-agent", com.shslab.shstube.service.DownloadService.USER_AGENT)
                 addOption("--geo-bypass")
-                // Retry on transient network errors during search
                 addOption("--retries", "3")
             }
             val resp = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(req)
@@ -330,7 +360,7 @@ class SearchFragment : Fragment() {
                 } catch (_: Throwable) { continue }
             }
         } catch (t: Throwable) {
-            com.shslab.shstube.util.DevLog.error("search", t, extra = "searchViaYtDlp failed q=$query")
+            com.shslab.shstube.util.DevLog.error("search", t, extra = "searchViaYtDlpAttempt failed q=$query args=$extractorArgs")
         }
         return hits
     }

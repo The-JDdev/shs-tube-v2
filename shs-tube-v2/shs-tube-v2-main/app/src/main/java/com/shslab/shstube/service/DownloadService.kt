@@ -51,8 +51,8 @@ class DownloadService : Service() {
         private const val NOTIF_ID_BASE = 9100
 
         const val USER_AGENT =
-            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/131.0.6778.200 Mobile Safari/537.36"
+            "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/137.0.7151.68 Mobile Safari/537.36"
 
         /** rowId -> yt-dlp processId. Lets us kill a running download by row. */
         private val processIds = ConcurrentHashMap<Long, String>()

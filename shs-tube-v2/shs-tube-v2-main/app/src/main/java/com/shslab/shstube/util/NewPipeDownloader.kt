@@ -47,8 +47,8 @@ class NewPipeDownloader private constructor(private val client: OkHttpClient) : 
 
     companion object {
         private const val USER_AGENT =
-            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/131.0.6778.200 Mobile Safari/537.36"
+            "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/137.0.7151.68 Mobile Safari/537.36"
 
         fun create(): NewPipeDownloader {
             val client = OkHttpClient.Builder()
