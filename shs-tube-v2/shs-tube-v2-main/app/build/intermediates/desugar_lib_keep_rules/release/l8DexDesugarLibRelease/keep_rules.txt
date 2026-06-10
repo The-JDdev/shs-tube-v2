@@ -1,0 +1,76 @@
+-keep class j$.time.DateTimeException {
+}
+-keep class j$.time.Duration {
+  public long toMillis();
+}
+-keep class j$.time.Instant {
+  public static j$.time.Instant ofEpochSecond(long);
+  public static j$.time.Instant parse(java.lang.CharSequence);
+  public long toEpochMilli();
+}
+-keep class j$.time.LocalDate {
+  public j$.time.LocalDateTime atStartOfDay();
+  public static j$.time.LocalDate parse(java.lang.CharSequence);
+  public static j$.time.LocalDate parse(java.lang.CharSequence,j$.time.format.DateTimeFormatter);
+}
+-keep class j$.time.LocalDateTime {
+  public j$.time.OffsetDateTime atOffset(j$.time.ZoneOffset);
+}
+-keep class j$.time.OffsetDateTime {
+  public j$.time.OffsetDateTime minus(long,j$.time.temporal.TemporalUnit);
+  public j$.time.OffsetDateTime minusDays(long);
+  public j$.time.OffsetDateTime minusYears(long);
+  public static j$.time.OffsetDateTime now(j$.time.ZoneId);
+  public static j$.time.OffsetDateTime ofInstant(j$.time.Instant,j$.time.ZoneId);
+  public static j$.time.OffsetDateTime parse(java.lang.CharSequence);
+  public static j$.time.OffsetDateTime parse(java.lang.CharSequence,j$.time.format.DateTimeFormatter);
+  public j$.time.ZonedDateTime toZonedDateTime();
+  public j$.time.OffsetDateTime truncatedTo(j$.time.temporal.TemporalUnit);
+  public j$.time.OffsetDateTime withOffsetSameInstant(j$.time.ZoneOffset);
+}
+-keep class j$.time.ZoneId {
+}
+-keep class j$.time.ZoneOffset {
+  j$.time.ZoneOffset UTC;
+}
+-keep class j$.time.ZonedDateTime {
+  public static j$.time.ZonedDateTime parse(java.lang.CharSequence,j$.time.format.DateTimeFormatter);
+  public j$.time.OffsetDateTime toOffsetDateTime();
+}
+-keep class j$.time.format.DateTimeFormatter {
+  public java.lang.String format(j$.time.temporal.TemporalAccessor);
+  public static j$.time.format.DateTimeFormatter ofPattern(java.lang.String);
+  public static j$.time.format.DateTimeFormatter ofPattern(java.lang.String,java.util.Locale);
+  j$.time.format.DateTimeFormatter ISO_LOCAL_DATE;
+}
+-keep class j$.time.format.DateTimeParseException {
+}
+-keep enum j$.time.temporal.ChronoUnit {
+  public static j$.time.temporal.ChronoUnit[] values();
+  j$.time.temporal.ChronoUnit DAYS;
+  j$.time.temporal.ChronoUnit HOURS;
+  j$.time.temporal.ChronoUnit MINUTES;
+  j$.time.temporal.ChronoUnit MONTHS;
+  j$.time.temporal.ChronoUnit SECONDS;
+  j$.time.temporal.ChronoUnit WEEKS;
+  j$.time.temporal.ChronoUnit YEARS;
+}
+-keep interface j$.time.temporal.TemporalAccessor {
+}
+-keep interface j$.time.temporal.TemporalUnit {
+}
+-keep class j$.util.DateRetargetClass {
+  public static j$.time.Instant toInstant(java.util.Date);
+}
+-keep class j$.util.DesugarCalendar {
+  public static j$.time.Instant toInstant(java.util.Calendar);
+}
+-keep class j$.util.DesugarGregorianCalendar {
+  public static java.util.GregorianCalendar from(j$.time.ZonedDateTime);
+}
+-keep class j$.util.DesugarTimeZone {
+  public static java.util.TimeZone getTimeZone(java.lang.String);
+}
+-keep class j$.util.stream.DesugarCollectors {
+  public static java.util.stream.Collector toUnmodifiableList();
+}

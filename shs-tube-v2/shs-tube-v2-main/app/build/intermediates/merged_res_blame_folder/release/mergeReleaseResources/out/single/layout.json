@@ -1,0 +1,78 @@
+[
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/fragment_about.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/fragment_about.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/fragment_browser.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/fragment_browser.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/fragment_search.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/fragment_search.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/fragment_downloads.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/fragment_downloads.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/sheet_format.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/sheet_format.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/sheet_carousel.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/sheet_carousel.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/item_search_result.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/item_search_result.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/item_format.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/item_format.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/activity_dev_log.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/activity_dev_log.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/activity_player.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/activity_player.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/item_quality.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/item_quality.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/sheet_share.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/sheet_share.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/activity_main.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.shslab.shstube.app-mergeReleaseResources-51:/layout/item_download.xml",
+        "source": "com.shslab.shstube.app-main-54:/layout/item_download.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/item_carousel.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/item_carousel.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/fragment_torrent.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/fragment_torrent.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/activity_storage_setup.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/activity_storage_setup.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/item_download.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/item_download.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-mergeReleaseResources-51:/layout/item_torrent.xml",
+        "source": "/home/z/.gradle/daemon/8.14/com.shslab.shstube.app-main-54:/layout/item_torrent.xml"
+    }
+]

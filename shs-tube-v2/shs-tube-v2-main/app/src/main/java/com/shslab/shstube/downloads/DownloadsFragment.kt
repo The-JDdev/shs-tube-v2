@@ -330,7 +330,8 @@ private class DownloadsAdapter(val onSelectionChanged: () -> Unit) : RecyclerVie
                         "↻  Retry download" -> {
                             // Remove failed entry and re-route through SmartDownloadRouter
                             DownloadRepository.deleteAsync(item.id)
-                            SmartDownloadRouter.route(requireActivity(), item.url)
+                            SmartDownloadRouter.route(ctx as? androidx.fragment.app.FragmentActivity
+                                ?: return@setItems, item.url)
                             Toast.makeText(ctx, "Retrying…", Toast.LENGTH_SHORT).show()
                         }
                         "▶  Play" -> {

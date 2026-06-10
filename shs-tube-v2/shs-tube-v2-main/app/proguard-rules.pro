@@ -46,3 +46,12 @@
 
 # Desugar
 -dontwarn desugar.**
+
+# Rhino JavaScript engine (used by yt-dlp internally) - these classes don't exist on Android
+-dontwarn java.beans.**
+-dontwarn javax.script.**
+-dontwarn org.mozilla.javascript.**
+
+# yt-dlp internal Python/js dependencies
+-dontwarn org.python.**
+-dontwarn com.googlecode.python4j.**

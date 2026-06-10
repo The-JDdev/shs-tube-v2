@@ -1,0 +1,406 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.shslab.shstube"
+4    android:versionCode="39"
+5    android:versionName="2.6.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="35" />
+10
+11    <!-- Internet + downloads -->
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:6:5-67
+12-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:6:22-64
+13    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+13-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:7:5-79
+13-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:7:22-76
+14    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+14-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:8:5-76
+14-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:8:22-73
+15    <uses-permission android:name="android.permission.WAKE_LOCK" />
+15-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:9:5-68
+15-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:9:22-65
+16    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+16-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:10:5-77
+16-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:10:22-74
+17    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+17-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:11:5-87
+17-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:11:22-84
+18    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+18-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:12:5-77
+18-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:12:22-74
+19
+20    <!-- Storage for downloads -->
+21    <uses-permission
+21-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:15:5-16:38
+22        android:name="android.permission.READ_EXTERNAL_STORAGE"
+22-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:15:22-77
+23        android:maxSdkVersion="32" />
+23-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:16:9-35
+24    <uses-permission
+24-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:17:5-18:38
+25        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+25-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:17:22-78
+26        android:maxSdkVersion="29" />
+26-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:18:9-35
+27    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+27-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:19:5-20:40
+27-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:19:22-79
+28
+29    <queries>
+29-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:22:5-27:15
+30        <intent>
+30-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:23:9-26:18
+31            <action android:name="android.intent.action.VIEW" />
+31-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:24:13-65
+31-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:24:21-62
+32
+33            <data android:scheme="https" />
+33-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+33-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+34        </intent>
+35    </queries>
+36
+37    <permission
+37-->[androidx.core:core:1.16.0] /home/z/.gradle/caches/8.14/transforms/b26ea9127d2ab8ee3a0be4cb9f43412d/transformed/core-1.16.0/AndroidManifest.xml:22:5-24:47
+38        android:name="com.shslab.shstube.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+38-->[androidx.core:core:1.16.0] /home/z/.gradle/caches/8.14/transforms/b26ea9127d2ab8ee3a0be4cb9f43412d/transformed/core-1.16.0/AndroidManifest.xml:23:9-81
+39        android:protectionLevel="signature" />
+39-->[androidx.core:core:1.16.0] /home/z/.gradle/caches/8.14/transforms/b26ea9127d2ab8ee3a0be4cb9f43412d/transformed/core-1.16.0/AndroidManifest.xml:24:9-44
+40
+41    <uses-permission android:name="com.shslab.shstube.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+41-->[androidx.core:core:1.16.0] /home/z/.gradle/caches/8.14/transforms/b26ea9127d2ab8ee3a0be4cb9f43412d/transformed/core-1.16.0/AndroidManifest.xml:26:5-97
+41-->[androidx.core:core:1.16.0] /home/z/.gradle/caches/8.14/transforms/b26ea9127d2ab8ee3a0be4cb9f43412d/transformed/core-1.16.0/AndroidManifest.xml:26:22-94
+42
+43    <application
+43-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:29:5-136:19
+44        android:name="com.shslab.shstube.ShsTubeApp"
+44-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:30:9-35
+45        android:allowBackup="true"
+45-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:31:9-35
+46        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+46-->[androidx.core:core:1.16.0] /home/z/.gradle/caches/8.14/transforms/b26ea9127d2ab8ee3a0be4cb9f43412d/transformed/core-1.16.0/AndroidManifest.xml:28:18-86
+47        android:extractNativeLibs="true"
+48        android:hardwareAccelerated="true"
+48-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:37:9-43
+49        android:icon="@mipmap/ic_launcher"
+49-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:32:9-43
+50        android:label="@string/app_name"
+50-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:34:9-41
+51        android:largeHeap="true"
+51-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:35:9-33
+52        android:requestLegacyExternalStorage="true"
+52-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:39:9-52
+53        android:roundIcon="@mipmap/ic_launcher_round"
+53-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:33:9-54
+54        android:supportsRtl="true"
+54-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:36:9-35
+55        android:theme="@style/Theme.ShsTube"
+55-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:40:9-45
+56        android:usesCleartextTraffic="true" >
+56-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:38:9-44
+57
+58        <!-- LAUNCHER — first-run storage chooser routes to MainActivity afterwards -->
+59        <activity
+59-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:44:9-53:20
+60            android:name="com.shslab.shstube.setup.StorageSetupActivity"
+60-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:45:13-55
+61            android:exported="true"
+61-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:46:13-36
+62            android:launchMode="singleTask"
+62-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:48:13-44
+63            android:theme="@style/Theme.ShsTube" >
+63-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:47:13-49
+64            <intent-filter>
+64-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:49:13-52:29
+65                <action android:name="android.intent.action.MAIN" />
+65-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:50:17-69
+65-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:50:25-66
+66
+67                <category android:name="android.intent.category.LAUNCHER" />
+67-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:51:17-77
+67-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:51:27-74
+68            </intent-filter>
+69        </activity>
+70        <activity
+70-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:55:9-88:20
+71            android:name="com.shslab.shstube.MainActivity"
+71-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:56:13-41
+72            android:configChanges="orientation|screenSize|keyboardHidden"
+72-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:59:13-74
+73            android:exported="true"
+73-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:57:13-36
+74            android:launchMode="singleTask"
+74-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:58:13-44
+75            android:windowSoftInputMode="adjustResize" >
+75-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:60:13-55
+76
+77            <!-- VIEW: open YouTube / common video links from any app -->
+78            <intent-filter android:autoVerify="false" >
+78-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:63:13-79:29
+78-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:63:28-54
+79                <action android:name="android.intent.action.VIEW" />
+79-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:24:13-65
+79-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:24:21-62
+80
+81                <category android:name="android.intent.category.DEFAULT" />
+81-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:65:17-76
+81-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:65:27-73
+82                <category android:name="android.intent.category.BROWSABLE" />
+82-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:66:17-78
+82-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:66:27-75
+83
+84                <data
+84-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+85                    android:host="youtube.com"
+85-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+86                    android:scheme="https" />
+86-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+87                <data
+87-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+88                    android:host="www.youtube.com"
+88-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+89                    android:scheme="https" />
+89-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+90                <data
+90-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+91                    android:host="m.youtube.com"
+91-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+92                    android:scheme="https" />
+92-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+93                <data
+93-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+94                    android:host="youtu.be"
+94-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+95                    android:scheme="https" />
+95-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+96                <data
+96-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+97                    android:host="music.youtube.com"
+97-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+98                    android:scheme="https" />
+98-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+99                <data
+99-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+100                    android:host="www.facebook.com"
+100-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+101                    android:scheme="https" />
+101-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+102                <data
+102-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+103                    android:host="fb.watch"
+103-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+104                    android:scheme="https" />
+104-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+105                <data
+105-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+106                    android:host="www.instagram.com"
+106-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+107                    android:scheme="https" />
+107-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+108                <data
+108-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+109                    android:host="www.tiktok.com"
+109-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+110                    android:scheme="https" />
+110-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+111                <data
+111-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+112                    android:host="vm.tiktok.com"
+112-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+113                    android:scheme="https" />
+113-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+114                <data
+114-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+115                    android:host="twitter.com"
+115-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+116                    android:scheme="https" />
+116-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+117                <data
+117-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+118                    android:host="x.com"
+118-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:67:46-72
+119                    android:scheme="https" />
+119-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+120            </intent-filter>
+121
+122            <!-- VIEW: magnet links -->
+123            <intent-filter>
+123-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:82:13-87:29
+124                <action android:name="android.intent.action.VIEW" />
+124-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:24:13-65
+124-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:24:21-62
+125
+126                <category android:name="android.intent.category.DEFAULT" />
+126-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:65:17-76
+126-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:65:27-73
+127                <category android:name="android.intent.category.BROWSABLE" />
+127-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:66:17-78
+127-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:66:27-75
+128
+129                <data android:scheme="magnet" />
+129-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+129-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:19-41
+130            </intent-filter>
+131        </activity>
+132
+133        <!-- TRANSPARENT SHARE CATCHER — Snaptube-style overlay sheet -->
+134        <activity
+134-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:91:9-103:20
+135            android:name="com.shslab.shstube.share.ShareCatcherActivity"
+135-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:92:13-55
+136            android:excludeFromRecents="true"
+136-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:95:13-46
+137            android:exported="true"
+137-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:93:13-36
+138            android:launchMode="singleTask"
+138-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:97:13-44
+139            android:noHistory="true"
+139-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:96:13-37
+140            android:theme="@style/Theme.ShsTube.Translucent" >
+140-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:94:13-61
+141            <intent-filter>
+141-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:98:13-102:29
+142                <action android:name="android.intent.action.SEND" />
+142-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:99:17-69
+142-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:99:25-66
+143
+144                <category android:name="android.intent.category.DEFAULT" />
+144-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:65:17-76
+144-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:65:27-73
+145
+146                <data android:mimeType="text/plain" />
+146-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:25:13-44
+146-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:101:23-52
+147            </intent-filter>
+148        </activity>
+149
+150        <!-- In-app video/audio player (ExoPlayer) -->
+151        <activity
+151-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:106:9-110:66
+152            android:name="com.shslab.shstube.player.PlayerActivity"
+152-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:107:13-50
+153            android:configChanges="orientation|screenSize|keyboardHidden"
+153-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:109:13-74
+154            android:exported="false"
+154-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:108:13-37
+155            android:theme="@style/Theme.AppCompat.NoActionBar" />
+155-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:110:13-63
+156
+157        <!-- Foreground download service — runs even after the share-catcher closes -->
+158        <service
+158-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:113:9-116:56
+159            android:name="com.shslab.shstube.service.DownloadService"
+159-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:114:13-52
+160            android:exported="false"
+160-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:115:13-37
+161            android:foregroundServiceType="dataSync" />
+161-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:116:13-53
+162
+163        <!-- In-app Developer Logs viewer — full runtime stack traces, no PC required -->
+164        <activity
+164-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:119:9-123:52
+165            android:name="com.shslab.shstube.devlog.DevLogActivity"
+165-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:120:13-50
+166            android:exported="false"
+166-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:121:13-37
+167            android:label="Developer Logs"
+167-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:122:13-43
+168            android:theme="@style/Theme.ShsTube" />
+168-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:123:13-49
+169
+170        <!-- FileProvider for sharing completed downloads without exposing raw file:// URIs -->
+171        <provider
+172            android:name="androidx.core.content.FileProvider"
+172-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:127:13-62
+173            android:authorities="com.shslab.shstube.fileprovider"
+173-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:128:13-64
+174            android:exported="false"
+174-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:129:13-37
+175            android:grantUriPermissions="true" >
+175-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:130:13-47
+176            <meta-data
+176-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:131:13-133:54
+177                android:name="android.support.FILE_PROVIDER_PATHS"
+177-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:132:17-67
+178                android:resource="@xml/file_paths" />
+178-->/home/z/my-project/shs-tube-v2/shs-tube-v2-main/app/src/main/AndroidManifest.xml:133:17-51
+179        </provider>
+180        <provider
+180-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/8.14/transforms/bfa15441d55e26f323b65d73c9865440/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+181            android:name="androidx.startup.InitializationProvider"
+181-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/8.14/transforms/bfa15441d55e26f323b65d73c9865440/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+182            android:authorities="com.shslab.shstube.androidx-startup"
+182-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/8.14/transforms/bfa15441d55e26f323b65d73c9865440/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+183            android:exported="false" >
+183-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/8.14/transforms/bfa15441d55e26f323b65d73c9865440/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+184            <meta-data
+184-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/8.14/transforms/bfa15441d55e26f323b65d73c9865440/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+185                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+185-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/8.14/transforms/bfa15441d55e26f323b65d73c9865440/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+186                android:value="androidx.startup" />
+186-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/8.14/transforms/bfa15441d55e26f323b65d73c9865440/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+187            <meta-data
+187-->[androidx.lifecycle:lifecycle-process:2.9.0] /home/z/.gradle/caches/8.14/transforms/b888a8596dff96436b48b267876fb402/transformed/lifecycle-process-2.9.0/AndroidManifest.xml:29:13-31:52
+188                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+188-->[androidx.lifecycle:lifecycle-process:2.9.0] /home/z/.gradle/caches/8.14/transforms/b888a8596dff96436b48b267876fb402/transformed/lifecycle-process-2.9.0/AndroidManifest.xml:30:17-78
+189                android:value="androidx.startup" />
+189-->[androidx.lifecycle:lifecycle-process:2.9.0] /home/z/.gradle/caches/8.14/transforms/b888a8596dff96436b48b267876fb402/transformed/lifecycle-process-2.9.0/AndroidManifest.xml:31:17-49
+190            <meta-data
+190-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:29:13-31:52
+191                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+191-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:30:17-85
+192                android:value="androidx.startup" />
+192-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:31:17-49
+193        </provider>
+194
+195        <service
+195-->[androidx.room:room-runtime-android:2.7.1] /home/z/.gradle/caches/8.14/transforms/ecb9cb4f0665611d101d6cd858e2b580/transformed/room-runtime-release/AndroidManifest.xml:24:9-28:63
+196            android:name="androidx.room.MultiInstanceInvalidationService"
+196-->[androidx.room:room-runtime-android:2.7.1] /home/z/.gradle/caches/8.14/transforms/ecb9cb4f0665611d101d6cd858e2b580/transformed/room-runtime-release/AndroidManifest.xml:25:13-74
+197            android:directBootAware="true"
+197-->[androidx.room:room-runtime-android:2.7.1] /home/z/.gradle/caches/8.14/transforms/ecb9cb4f0665611d101d6cd858e2b580/transformed/room-runtime-release/AndroidManifest.xml:26:13-43
+198            android:exported="false" />
+198-->[androidx.room:room-runtime-android:2.7.1] /home/z/.gradle/caches/8.14/transforms/ecb9cb4f0665611d101d6cd858e2b580/transformed/room-runtime-release/AndroidManifest.xml:27:13-37
+199
+200        <receiver
+200-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:34:9-52:20
+201            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+201-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:35:13-76
+202            android:directBootAware="false"
+202-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:36:13-44
+203            android:enabled="true"
+203-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:37:13-35
+204            android:exported="true"
+204-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:38:13-36
+205            android:permission="android.permission.DUMP" >
+205-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:39:13-57
+206            <intent-filter>
+206-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:40:13-42:29
+207                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+207-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:17-91
+207-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:41:25-88
+208            </intent-filter>
+209            <intent-filter>
+209-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:43:13-45:29
+210                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+210-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:17-85
+210-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:44:25-82
+211            </intent-filter>
+212            <intent-filter>
+212-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:46:13-48:29
+213                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+213-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:17-88
+213-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:47:25-85
+214            </intent-filter>
+215            <intent-filter>
+215-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:49:13-51:29
+216                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+216-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:17-95
+216-->[androidx.profileinstaller:profileinstaller:1.4.0] /home/z/.gradle/caches/8.14/transforms/d379a3148c8c29912ec8993c10543bfa/transformed/profileinstaller-1.4.0/AndroidManifest.xml:50:25-92
+217            </intent-filter>
+218        </receiver>
+219    </application>
+220
+221</manifest>

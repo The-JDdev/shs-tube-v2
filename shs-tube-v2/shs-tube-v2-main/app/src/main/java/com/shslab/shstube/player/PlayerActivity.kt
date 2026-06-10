@@ -63,7 +63,6 @@ class PlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         try {
-            player?.removeListener(/* all listeners auto-cleared on release */)
             player?.release()
         } catch (_: Throwable) {}
         player = null

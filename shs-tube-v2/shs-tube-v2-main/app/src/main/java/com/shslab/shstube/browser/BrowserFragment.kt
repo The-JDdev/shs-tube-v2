@@ -66,7 +66,6 @@ class BrowserFragment : Fragment() {
 
         // Replace the WebView placeholder in the layout with our programmatically created one
         val container = v.findViewById<android.view.ViewGroup>(R.id.webview_container)
-            ?: v.findViewById<android.view.ViewGroup>(R.id.webview_parent)
         if (container != null) {
             container.removeAllViews()
             container.addView(wv, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
