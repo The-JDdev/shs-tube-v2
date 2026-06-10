@@ -27,8 +27,11 @@ import kotlinx.coroutines.withContext
 /**
  * In-app quality picker (used by Browser long-press / SmartRouter for normal http URLs).
  *
- * Backed by yt-dlp `getInfo()`. Selecting a row delegates to DownloadService — the row
- * appears live in DownloadsFragment via Room observation.
+ * Backed by yt-dlp `getInfo()`. Selecting a row delegates to DownloadService.
+ *
+ * FIX v2.5: Added retry logic for getInfo() failures. If the first attempt fails
+ * (common with YouTube PO token / rate-limit issues), we retry once with
+ * different extractor-args before giving up.
  */
 class FormatSheet : BottomSheetDialogFragment() {
 
@@ -77,24 +80,57 @@ class FormatSheet : BottomSheetDialogFragment() {
             return v
         }
 
-        // Background fetch of formats — wait for engine, then call yt-dlp
+        // Background fetch of formats with retry
         viewLifecycleOwner.lifecycleScope.launch {
             if (!ShsTubeApp.ytDlpReady) {
-                tvTitle.text = "Initialising yt-dlp engine…"
+                tvTitle.text = "Initialising yt-dlp engine..."
                 ShsTubeApp.awaitYtDlpReady(timeoutMs = 60_000)
             }
+
+            // Try fetching formats (with one retry on failure)
+            var info: com.yausername.youtubedl_android.mapper.VideoInfo? = null
+            var lastError: Throwable? = null
+
+            // Attempt 1: ios + web client (best for bypassing PO token)
             try {
-                val info = withContext(Dispatchers.IO) {
-                    // Use a request with the same anti-bot bypass options as the actual download
+                info = withContext(Dispatchers.IO) {
                     val req = YoutubeDLRequest(url).apply {
                         addOption("--user-agent", DownloadService.USER_AGENT)
-                        // ios client bypasses PO Token + DRM checks; web as fallback for formats
                         addOption("--extractor-args", "youtube:player_client=ios,web")
                         addOption("--geo-bypass")
                         addOption("--no-playlist")
+                        addOption("--no-warnings")
                     }
                     YoutubeDL.getInstance().getInfo(req)
                 }
+            } catch (t: Throwable) {
+                lastError = t
+                com.shslab.shstube.util.DevLog.warn("yt-dlp", "FormatSheet attempt 1 failed: ${t.message?.take(100)}")
+            }
+
+            // Attempt 2: If first attempt failed, try with tv client (different auth path)
+            if (info == null) {
+                try {
+                    tvTitle.text = "Retrying with alternate client..."
+                    info = withContext(Dispatchers.IO) {
+                        val req = YoutubeDLRequest(url).apply {
+                            addOption("--user-agent", DownloadService.USER_AGENT)
+                            addOption("--extractor-args", "youtube:player_client=tv,web")
+                            addOption("--geo-bypass")
+                            addOption("--no-playlist")
+                            addOption("--no-warnings")
+                            addOption("--retries", "3")
+                        }
+                        YoutubeDL.getInstance().getInfo(req)
+                    }
+                    lastError = null
+                } catch (t: Throwable) {
+                    lastError = t
+                    com.shslab.shstube.util.DevLog.warn("yt-dlp", "FormatSheet attempt 2 failed: ${t.message?.take(100)}")
+                }
+            }
+
+            if (info != null) {
                 val list = info.formats ?: emptyList()
                 val rows = list.mapNotNull { f -> toRow(f) }
                     .sortedByDescending { row -> row.score }
@@ -105,12 +141,12 @@ class FormatSheet : BottomSheetDialogFragment() {
                 val safeTitle = info.title ?: titleHint
                 resolvedTitle = safeTitle
                 if (safeTitle.isNotBlank()) tvTitle.text = safeTitle
-            } catch (t: Throwable) {
+            } else {
                 pb.visibility = View.GONE
-                com.shslab.shstube.util.DevLog.error("yt-dlp", t, extra = "FormatSheet getInfo failed url=$url")
+                com.shslab.shstube.util.DevLog.error("yt-dlp", lastError ?: Throwable("unknown"), extra = "FormatSheet getInfo failed url=$url")
                 Toast.makeText(
                     requireContext(),
-                    "Format fetch failed: ${t.javaClass.simpleName}. Use 'Best' to download.",
+                    "Format fetch failed: ${lastError?.javaClass?.simpleName ?: "unknown"}. Use 'Best' to download directly.",
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -125,7 +161,7 @@ class FormatSheet : BottomSheetDialogFragment() {
             val vcodec = f.vcodec ?: ""
             val acodec = f.acodec ?: ""
             val res = if (f.height > 0) "${f.height}p" else ""
-            val sizeMb = if (f.fileSize > 0) " • ${f.fileSize / (1024 * 1024)} MB" else ""
+            val sizeMb = if (f.fileSize > 0) " - ${f.fileSize / (1024 * 1024)} MB" else ""
             val isAudio = (vcodec == "none" || vcodec.isBlank()) && acodec.isNotBlank() && acodec != "none"
             val tag = when {
                 vcodec != "none" && vcodec.isNotBlank() && acodec != "none" && acodec.isNotBlank() -> "video+audio"
@@ -133,7 +169,7 @@ class FormatSheet : BottomSheetDialogFragment() {
                 isAudio -> "audio only"
                 else -> "?"
             }
-            val label = "$tag • $res • $ext$sizeMb"
+            val label = "$tag - $res - $ext$sizeMb"
             val score = (if (f.height > 0) f.height else 0) * 1000 + (f.fileSize / (1024L * 1024L)).toInt()
             FormatRow(id, label, score, isAudio)
         } catch (_: Throwable) {
@@ -142,7 +178,7 @@ class FormatSheet : BottomSheetDialogFragment() {
     }
 
     private fun startDownload(formatSpec: String, label: String, audioOnly: Boolean) {
-        val title = (resolvedTitle.ifBlank { titleHint.ifBlank { url.substringAfterLast('/') } }) + " — $label"
+        val title = (resolvedTitle.ifBlank { titleHint.ifBlank { url.substringAfterLast('/') } }) + " - $label"
         DownloadService.enqueue(
             requireContext().applicationContext,
             url = url, title = title, formatId = formatSpec, audioOnly = audioOnly

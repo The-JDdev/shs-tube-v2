@@ -1,9 +1,9 @@
 package com.shslab.shstube.torrent
 
 import android.content.Context
-import android.os.Environment
 import android.util.Log
 import com.shslab.shstube.ShsTubeApp
+import com.shslab.shstube.data.StoragePrefs
 import com.shslab.shstube.util.DevLog
 import org.libtorrent4j.AlertListener
 import org.libtorrent4j.SessionManager
@@ -64,10 +64,10 @@ object TorrentEngine {
         if (session != null) return
         try {
             val sm = SessionManager()
-            savePath = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                "SHSTube/Torrents"
-            ).apply { if (!exists()) mkdirs() }
+            // Use StoragePrefs for consistent download path handling
+            // (handles Android 11+ scoped storage properly)
+            savePath = File(StoragePrefs.publicDownloadDir(), "Torrents")
+            if (!savePath.exists()) savePath.mkdirs()
 
             sm.addListener(object : AlertListener {
                 override fun types(): IntArray = intArrayOf(

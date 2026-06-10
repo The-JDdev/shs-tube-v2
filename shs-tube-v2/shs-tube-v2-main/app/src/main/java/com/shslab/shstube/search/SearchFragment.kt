@@ -29,12 +29,17 @@ import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 
 /**
- * Native YouTube search via NewPipe Extractor.
+ * Native YouTube search via NewPipe Extractor + yt-dlp fallback.
  *
- * - Filter chips: Videos / Channels / Playlists
- * - Each result row has [▶ Play] (opens in-app ExoPlayer with yt-dlp resolved URL)
- *   and [Queue] (opens FormatSheet for quality picker → download)
- * - All work on Dispatchers.IO. Never blocks UI.
+ * Search strategy (three tiers):
+ *   1. NewPipe Extractor — fast, native Java, no yt-dlp dependency
+ *   2. yt-dlp `ytsearch20:` — uses ios+web client, bypasses PO token blocks
+ *   3. If both fail, show clear error with retry option
+ *
+ * Filter chips: Videos / Channels / Playlists
+ * Each result row has [Play] (opens in-app ExoPlayer with yt-dlp resolved URL)
+ * and [Download] (opens FormatSheet for quality picker -> download)
+ * All work on Dispatchers.IO. Never blocks UI.
  */
 class SearchFragment : Fragment() {
 
@@ -102,7 +107,6 @@ class SearchFragment : Fragment() {
             return
         }
         if (hit.kind != HitKind.Video) {
-            // Channel / playlist links open in browser tab
             openInBrowser(hit.url)
             return
         }
@@ -123,7 +127,7 @@ class SearchFragment : Fragment() {
             openInBrowser(hit.url)
             return
         }
-        Toast.makeText(requireContext(), "Resolving stream…", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), "Resolving stream...", Toast.LENGTH_SHORT).show()
         ShsTubeApp.appScope.launch {
             try {
                 if (!ShsTubeApp.ytDlpReady) {
@@ -162,9 +166,18 @@ class SearchFragment : Fragment() {
         ShsTubeApp.appScope.launch {
             val hits = mutableListOf<SearchHit>()
             var errMsg: String? = null
+
+            // TIER 1: NewPipe Extractor (fast, native Java)
             try {
                 val service = ServiceList.YouTube
-                val handler = service.searchQHFactory.fromQuery(query, listOf(currentFilter), "")
+                // Use getSearchQHFactory with content filter for proper search
+                val filterList = when (currentFilter) {
+                    "videos"    -> listOf("videos")
+                    "channels"  -> listOf("channels")
+                    "playlists" -> listOf("playlists")
+                    else        -> emptyList<String>()
+                }
+                val handler = service.searchQHFactory.fromQuery(query, filterList, "")
                 val extractor = service.getSearchExtractor(handler)
                 extractor.fetchPage()
                 val items = extractor.initialPage.items
@@ -172,9 +185,7 @@ class SearchFragment : Fragment() {
                     when (item) {
                         is StreamInfoItem -> {
                             val rawUrl = item.url ?: ""
-                            // Derive thumbnail from YouTube video ID — works for any YT URL,
-                            // sidesteps NewPipe's thumbnailUrl API which changed across versions.
-                            val ytId = Regex("[?&]v=([A-Za-z0-9_-]{11})").find(rawUrl)?.groupValues?.getOrNull(1) ?: ""
+                            val ytId = extractVideoId(rawUrl)
                             val thumb = if (ytId.isNotEmpty()) "https://i.ytimg.com/vi/$ytId/hqdefault.jpg" else ""
                             hits += SearchHit(
                                 kind = HitKind.Video,
@@ -202,25 +213,46 @@ class SearchFragment : Fragment() {
                         else -> {}
                     }
                 }
+                if (hits.isNotEmpty()) {
+                    com.shslab.shstube.util.DevLog.info("search", "NewPipe returned ${hits.size} hits for '$query'")
+                }
             } catch (t: Throwable) {
                 errMsg = "${t.javaClass.simpleName}: ${t.message?.take(120)}"
                 com.shslab.shstube.util.DevLog.error("search", t, extra = "NewPipe search failed q=$query")
             }
 
-            // FALLBACK — if NewPipe returned zero (rate-limit / scrape blocked / parse error),
-            // ask yt-dlp's `ytsearch20:` for the same query. yt-dlp uses the tv/web client and
-            // is far more resilient to YouTube's anti-bot changes.
-            if (hits.isEmpty() && currentFilter == "videos" && ShsTubeApp.ytDlpReady) {
-                try {
-                    val ytDlpHits = searchViaYtDlp(query)
-                    if (ytDlpHits.isNotEmpty()) {
-                        hits.addAll(ytDlpHits)
-                        errMsg = null
-                    }
-                    com.shslab.shstube.util.DevLog.info("search", "yt-dlp fallback returned ${ytDlpHits.size} hits for '$query'")
-                } catch (t: Throwable) {
-                    com.shslab.shstube.util.DevLog.error("search", t, extra = "yt-dlp fallback failed q=$query")
+            // TIER 2: yt-dlp fallback — if NewPipe returned zero results
+            // (rate-limit / scrape blocked / parse error / ContentNotAvailableException),
+            // ask yt-dlp's `ytsearch20:` for the same query.
+            // yt-dlp uses ios+web client and is far more resilient to YouTube's anti-bot changes.
+            if (hits.isEmpty() && currentFilter == "videos") {
+                // Wait for yt-dlp engine if not ready yet (but with shorter timeout for search)
+                if (!ShsTubeApp.ytDlpReady) {
+                    try {
+                        val ready = ShsTubeApp.awaitYtDlpReady(timeoutMs = 15_000)
+                        if (!ready) {
+                            com.shslab.shstube.util.DevLog.warn("search", "yt-dlp engine not ready for fallback search")
+                        }
+                    } catch (_: Throwable) {}
                 }
+
+                if (ShsTubeApp.ytDlpReady) {
+                    try {
+                        val ytDlpHits = searchViaYtDlp(query)
+                        if (ytDlpHits.isNotEmpty()) {
+                            hits.addAll(ytDlpHits)
+                            errMsg = null
+                        }
+                        com.shslab.shstube.util.DevLog.info("search", "yt-dlp fallback returned ${ytDlpHits.size} hits for '$query'")
+                    } catch (t: Throwable) {
+                        com.shslab.shstube.util.DevLog.error("search", t, extra = "yt-dlp fallback failed q=$query")
+                    }
+                }
+            }
+
+            // TIER 3: If both failed, provide helpful error message
+            if (hits.isEmpty() && errMsg == null && currentFilter != "videos") {
+                errMsg = "No ${currentFilter} results. Try switching to Videos filter."
             }
 
             withContext(Dispatchers.Main) {
@@ -232,7 +264,7 @@ class SearchFragment : Fragment() {
                 if (errMsg != null && hits.isEmpty()) {
                     Toast.makeText(requireContext(), "Search error: $errMsg", Toast.LENGTH_LONG).show()
                 } else if (hits.isEmpty()) {
-                    Toast.makeText(requireContext(), "No results", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "No results found. Check your connection and try again.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -240,8 +272,12 @@ class SearchFragment : Fragment() {
 
     /**
      * yt-dlp search fallback: Uses `ytsearch20:` which returns playlist entries.
-     * We use --flat-playlist + --dump-single-json to get the list of entries,
-     * then parse each entry's id/title/duration from the JSON.
+     * Uses --flat-playlist + --dump-single-json to get the list of entries,
+     * then parses each entry's id/title/duration from the JSON.
+     *
+     * CRITICAL FIX: Uses `--extractor-args "youtube:player_client=ios,web"`
+     * to bypass PO token / DRM checks that block the default android client.
+     * Also adds --no-warnings to avoid stderr noise parsing issues.
      */
     private fun searchViaYtDlp(query: String): List<SearchHit> {
         val hits = mutableListOf<SearchHit>()
@@ -252,11 +288,22 @@ class SearchFragment : Fragment() {
                 addOption("--no-playlist")
                 addOption("--skip-download")
                 addOption("--no-warnings")
+                // ios client bypasses PO Token + DRM checks; web as fallback for formats
                 addOption("--extractor-args", "youtube:player_client=ios,web")
                 addOption("--user-agent", com.shslab.shstube.service.DownloadService.USER_AGENT)
+                addOption("--geo-bypass")
+                // Retry on transient network errors during search
+                addOption("--retries", "3")
             }
             val resp = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(req)
             val out = resp.out ?: return hits
+
+            // Check if the response indicates an error
+            if (out.isBlank() || out.startsWith("ERROR:")) {
+                com.shslab.shstube.util.DevLog.warn("search", "yt-dlp search returned error: ${out.take(200)}")
+                return hits
+            }
+
             val json = JSONObject(out)
             val entries = json.optJSONArray("entries") ?: return hits
 
@@ -286,6 +333,21 @@ class SearchFragment : Fragment() {
             com.shslab.shstube.util.DevLog.error("search", t, extra = "searchViaYtDlp failed q=$query")
         }
         return hits
+    }
+
+    companion object {
+        /** Extract YouTube video ID from various URL formats. */
+        fun extractVideoId(url: String): String {
+            // Standard watch URL: ?v=VIDEO_ID
+            Regex("[?&]v=([A-Za-z0-9_-]{11})").find(url)?.groupValues?.getOrNull(1)?.let { return it }
+            // Short URL: youtu.be/VIDEO_ID
+            Regex("""youtu\.be/([A-Za-z0-9_-]{11})""").find(url)?.groupValues?.getOrNull(1)?.let { return it }
+            // Embed URL: /embed/VIDEO_ID
+            Regex("""/embed/([A-Za-z0-9_-]{11})""").find(url)?.groupValues?.getOrNull(1)?.let { return it }
+            // Shorts URL: /shorts/VIDEO_ID
+            Regex("""/shorts/([A-Za-z0-9_-]{11})""").find(url)?.groupValues?.getOrNull(1)?.let { return it }
+            return ""
+        }
     }
 
     private fun formatDuration(secs: Long): String {

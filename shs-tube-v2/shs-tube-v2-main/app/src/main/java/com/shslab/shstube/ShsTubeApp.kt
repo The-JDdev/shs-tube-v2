@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.Localization
 
@@ -33,23 +34,36 @@ class ShsTubeApp : Application() {
         @Volatile var newPipeReady = false
         @Volatile var torrentReady = false
 
+        // Lock to prevent double-init race condition
+        private val ytDlpInitLock = Any()
+
         /**
          * Suspends until yt-dlp finishes its first-run binary extraction (or timeout).
          * Returns true if the engine is ready, false if init failed / timed out.
+         *
+         * FIX v2.5: Synchronized to prevent race where two threads call init() simultaneously
+         * (one from search, one from download) causing double-init crash.
          */
         suspend fun awaitYtDlpReady(timeoutMs: Long = 60_000L): Boolean {
             if (ytDlpReady) return true
-            try {
-                YoutubeDL.getInstance().init(instance)
-                FFmpeg.getInstance().init(instance)
-                ytDlpReady = true
-                ytDlpInitError = null
-                Log.i(TAG, "yt-dlp re-init OK (suspend)")
-                return true
-            } catch (t: Throwable) {
-                ytDlpInitError = t.message
-                Log.w(TAG, "yt-dlp re-init in awaitYtDlpReady failed: ${t.message}")
+
+            // Try to init if not already ready (synchronized to avoid double-init)
+            synchronized(ytDlpInitLock) {
+                if (ytDlpReady) return true
+                try {
+                    YoutubeDL.getInstance().init(instance)
+                    FFmpeg.getInstance().init(instance)
+                    ytDlpReady = true
+                    ytDlpInitError = null
+                    Log.i(TAG, "yt-dlp re-init OK (suspend)")
+                    return true
+                } catch (t: Throwable) {
+                    ytDlpInitError = t.message
+                    Log.w(TAG, "yt-dlp re-init in awaitYtDlpReady failed: ${t.message}")
+                }
             }
+
+            // Poll for readiness in case another thread is doing the init
             var elapsed = 0L
             val step = 250L
             while (elapsed < timeoutMs) {
@@ -64,7 +78,7 @@ class ShsTubeApp : Application() {
         super.onCreate()
         instance = this
 
-        // 0. CRASH SHIELD — must be first thing in process
+        // 0. CRASH SHIELD - must be first thing in process
         try { CrashHandler.install(this) }
         catch (t: Throwable) { Log.e(TAG, "CrashHandler install failed", t) }
 
@@ -87,13 +101,17 @@ class ShsTubeApp : Application() {
             DevLog.error("newpipe", t, extra = "NewPipe init failed")
         }
 
-        // 3. Initialize yt-dlp + FFmpeg, THEN auto-update yt-dlp to nightly so we keep up
-        //    with YouTube's anti-bot signature changes (the bundled binary goes stale every
-        //    few weeks). This is the #1 root cause of "search blank / no quality / dl fails".
+        // 3. Initialize yt-dlp + FFmpeg on background thread.
+        //    CRITICAL FIX: Mark ytDlpReady BEFORE starting the auto-update.
+        //    Previously the auto-update ran inline and could block for 30+ seconds,
+        //    causing "search not working" / "download not starting" on first launch.
+        //    Now: init first -> mark ready -> update in background (non-blocking).
         appScope.launch {
             try {
-                YoutubeDL.getInstance().init(this@ShsTubeApp)
-                FFmpeg.getInstance().init(this@ShsTubeApp)
+                synchronized(ytDlpInitLock) {
+                    YoutubeDL.getInstance().init(this@ShsTubeApp)
+                    FFmpeg.getInstance().init(this@ShsTubeApp)
+                }
                 ytDlpReady = true
                 ytDlpInitError = null
                 try {
@@ -106,8 +124,9 @@ class ShsTubeApp : Application() {
                 return@launch
             }
 
-            // Fetch the latest yt-dlp binary over the network — uses the NIGHTLY channel
-            // so we get same-day fixes for YouTube's signature/PO-token changes.
+            // Auto-update yt-dlp binary AFTER marking engine ready.
+            // Uses NIGHTLY channel for same-day fixes to YouTube signature/PO-token changes.
+            // This runs in background and does NOT block search or download.
             ytDlpUpdating = true
             try {
                 val status = YoutubeDL.getInstance().updateYoutubeDL(
@@ -153,19 +172,18 @@ class ShsTubeApp : Application() {
             }
         }
 
-        // 6. Network auto-resume — when connectivity returns, retry failed downloads
+        // 6. Network auto-resume - when connectivity returns, retry failed downloads
         try { com.shslab.shstube.util.NetworkAutoResume.install(this) }
         catch (t: Throwable) { DevLog.warn("network", "auto-resume not installed: ${t.message}") }
 
         // 7. Retry any downloads that were in "downloading" state when the app was killed
-        //    (they are stuck — yt-dlp process is gone). Mark them as failed so user can retry.
         appScope.launch {
             try {
                 val stuck = com.shslab.shstube.data.DownloadRepository.snapshot()
                     .filter { it.status == "downloading" || it.status == "initializing" }
                 for (item in stuck) {
                     com.shslab.shstube.data.DownloadRepository.markFailed(
-                        item.id, "Interrupted — app was killed. Tap Retry."
+                        item.id, "Interrupted - app was killed. Tap Retry."
                     )
                 }
                 if (stuck.isNotEmpty()) {

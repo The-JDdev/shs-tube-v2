@@ -83,6 +83,9 @@ class ShareCatcherActivity : FragmentActivity() {
                 addOption("--skip-download")
                 addOption("--no-warnings")
                 addOption("--extractor-args", "youtube:player_client=ios,web")
+                addOption("--user-agent", com.shslab.shstube.service.DownloadService.USER_AGENT)
+                addOption("--geo-bypass")
+                addOption("--retries", "3")
             }
             val resp = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(req)
             val out = resp.out ?: return null

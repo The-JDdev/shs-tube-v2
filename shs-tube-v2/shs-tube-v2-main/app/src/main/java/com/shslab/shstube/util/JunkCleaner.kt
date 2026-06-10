@@ -1,7 +1,6 @@
 package com.shslab.shstube.util
 
 import android.content.Context
-import android.os.Environment
 import com.shslab.shstube.data.StoragePrefs
 import java.io.File
 
@@ -39,7 +38,8 @@ object JunkCleaner {
         runCatching { ctx.externalCacheDir?.let { roots += it } }
         runCatching { ctx.getExternalFilesDir(null)?.let { roots += it } }
         runCatching {
-            roots += File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SHSTube")
+            // Use StoragePrefs for consistent path handling
+            roots += StoragePrefs.publicDownloadDir()
         }
         runCatching {
             // Same path StoragePrefs reports if the user picked one we can read directly

@@ -26,26 +26,29 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * "Snaptube" share sheet — Audio + Video sections with sizes.
+ * "Snaptube" share sheet - Audio + Video sections with sizes.
  *
  * Calls yt-dlp `--dump-json --no-playlist <url>` off the UI thread, parses the
  * `formats` array, splits into Audio (vcodec=none) vs Video, and shows two RecyclerViews.
  * Tapping a row hands off to DownloadService and dismisses.
+ *
+ * FIX v2.5: Added retry with alternate client (tv+web) if ios+web fails.
+ * Added --no-warnings and --geo-bypass for more reliable format extraction.
  */
 class ShareSheetFragment : BottomSheetDialogFragment() {
 
     data class Quality(
         val formatId: String,
-        val label: String,         // e.g. "1080p mp4"
-        val sizeBytes: Long,       // 0 if unknown
+        val label: String,
+        val sizeBytes: Long,
         val isAudio: Boolean,
         val ext: String,
-        val abr: Int = 0,          // audio bitrate
+        val abr: Int = 0,
         val height: Int = 0
     )
 
     private var url: String = ""
-    private var titleStr: String = "Loading…"
+    private var titleStr: String = "Loading..."
 
     companion object {
         private const val ARG_URL = "arg_url"
@@ -72,27 +75,27 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
         val rvVideo = view.findViewById<RecyclerView>(R.id.rv_video)
 
         urlView.text = url
-        titleView.text = "SHS Tube — Pick quality"
+        titleView.text = "SHS Tube - Pick quality"
 
         rvAudio.layoutManager = LinearLayoutManager(requireContext())
         rvVideo.layoutManager = LinearLayoutManager(requireContext())
 
         viewLifecycleOwner.lifecycleScope.launch {
-            // Engine ready gate (yt-dlp may still be extracting Python)
+            // Engine ready gate
             if (!ShsTubeApp.ytDlpReady) {
-                loadingLabel.text = "Initialising yt-dlp engine…"
+                loadingLabel.text = "Initialising yt-dlp engine..."
                 val ok = ShsTubeApp.awaitYtDlpReady(timeoutMs = 60_000)
                 if (!ok) {
                     loadingBar.visibility = View.GONE
-                    loadingLabel.text = "Engine init failed — retry from main app"
+                    loadingLabel.text = "Engine init failed - retry from main app"
                     return@launch
                 }
             }
-            loadingLabel.text = "Fetching available qualities…"
+            loadingLabel.text = "Fetching available qualities..."
 
             val (title, audio, video) = withContext(Dispatchers.IO) { fetchFormats(url) }
             titleStr = title
-            titleView.text = title.ifBlank { "SHS Tube — Pick quality" }
+            titleView.text = title.ifBlank { "SHS Tube - Pick quality" }
             loadingBar.visibility = View.GONE
             loadingLabel.visibility = View.GONE
 
@@ -139,16 +142,33 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
     /**
      * Calls yt-dlp `--dump-json` and parses formats.
      * Returns (title, audioFormats, videoFormats).
+     *
+     * FIX v2.5: Retry with alternate client if first attempt fails.
      */
     private fun fetchFormats(targetUrl: String): Triple<String, List<Quality>, List<Quality>> {
+        // Attempt 1: ios + web (primary)
+        var result = fetchFormatsAttempt(targetUrl, "youtube:player_client=ios,web")
+        if (result.first.isNotBlank() || result.second.isNotEmpty() || result.third.isNotEmpty()) {
+            return result
+        }
+
+        // Attempt 2: tv + web (fallback - different auth path)
+        com.shslab.shstube.util.DevLog.info("yt-dlp", "ShareSheet retrying with tv+web client for $targetUrl")
+        result = fetchFormatsAttempt(targetUrl, "youtube:player_client=tv,web")
+        return result
+    }
+
+    private fun fetchFormatsAttempt(targetUrl: String, extractorArgs: String): Triple<String, List<Quality>, List<Quality>> {
         return try {
             val req = YoutubeDLRequest(targetUrl).apply {
                 addOption("--dump-json")
                 addOption("--no-playlist")
                 addOption("--skip-download")
+                addOption("--no-warnings")
                 addOption("--user-agent", DownloadService.USER_AGENT)
-                addOption("--extractor-args", "youtube:player_client=ios,web")
+                addOption("--extractor-args", extractorArgs)
                 addOption("--geo-bypass")
+                addOption("--retries", "3")
             }
             val resp = YoutubeDL.getInstance().execute(req)
             val out = resp.out
@@ -190,7 +210,7 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
             val v = videos.distinctBy { q -> q.label }.take(10)
             Triple(title, a, v)
         } catch (t: Throwable) {
-            com.shslab.shstube.util.DevLog.error("yt-dlp", t, extra = "share-sheet fetchFormats failed url=$targetUrl")
+            com.shslab.shstube.util.DevLog.error("yt-dlp", t, extra = "share-sheet fetchFormats failed url=$targetUrl args=$extractorArgs")
             Triple("", emptyList(), emptyList())
         }
     }
@@ -209,7 +229,7 @@ class ShareSheetFragment : BottomSheetDialogFragment() {
         override fun onBindViewHolder(holder: VH, position: Int) {
             val q = data[position]
             holder.label.text = q.label
-            holder.size.text = if (q.sizeBytes > 0) humanReadable(q.sizeBytes) else "—"
+            holder.size.text = if (q.sizeBytes > 0) humanReadable(q.sizeBytes) else "-"
             holder.itemView.setOnClickListener { onClick(q) }
         }
         private fun humanReadable(bytes: Long): String {

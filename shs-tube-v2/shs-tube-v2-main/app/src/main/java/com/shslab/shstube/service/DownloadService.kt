@@ -29,8 +29,12 @@ import java.util.concurrent.ConcurrentHashMap
  * Foreground service that runs yt-dlp downloads off the UI thread, posts a sticky notification
  * with live progress, and persists every state change to Room.
  *
- * Supports user-initiated cancellation via [ACTION_CANCEL] — kills the underlying yt-dlp
+ * Supports user-initiated cancellation via [ACTION_CANCEL] - kills the underlying yt-dlp
  * process via [YoutubeDL.destroyProcessById] and wipes any .part / .ytdl temp files.
+ *
+ * FIX v2.5: Added --retries, --fragment-retries, --concurrent-fragments for robust downloads.
+ * Added --embed-thumbnail for audio files. Added --abort-on-unavailable-fragment to fail fast
+ * on completely unavailable streams instead of hanging.
  */
 class DownloadService : Service() {
 
@@ -48,12 +52,12 @@ class DownloadService : Service() {
 
         const val USER_AGENT =
             "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/126.0.6478.122 Mobile Safari/537.36"
+            "Chrome/131.0.6778.200 Mobile Safari/537.36"
 
         /** rowId -> yt-dlp processId. Lets us kill a running download by row. */
         private val processIds = ConcurrentHashMap<Long, String>()
 
-        /** Rows the user explicitly cancelled — runJob() checks this on completion. */
+        /** Rows the user explicitly cancelled - runJob() checks this on completion. */
         private val cancelled = ConcurrentHashMap.newKeySet<Long>()
 
         /** rowId -> expected output filename pattern (for reliable file detection) */
@@ -82,9 +86,7 @@ class DownloadService : Service() {
                 action = ACTION_CANCEL
                 putExtra(EXTRA_ROW_ID, rowId)
             }
-            // startService is fine for a control message — the service is already foreground
             try { ctx.startService(i) } catch (_: Throwable) {
-                // Service might not be running — handle directly
                 killProcessAndCleanup(ctx, rowId)
             }
         }
@@ -134,14 +136,14 @@ class DownloadService : Service() {
     override fun onCreate() {
         super.onCreate()
         ensureChannel()
-        // Promote to foreground IMMEDIATELY (within 5s of startForegroundService) — otherwise ANR
-        startForeground(NOTIF_ID_BASE, buildNotification(NOTIF_ID_BASE, -1L, "SHS Tube", "Preparing download…", 0, true))
+        // Promote to foreground IMMEDIATELY (within 5s of startForegroundService)
+        startForeground(NOTIF_ID_BASE, buildNotification(NOTIF_ID_BASE, -1L, "SHS Tube", "Preparing download...", 0, true))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent == null) return START_NOT_STICKY
 
-        // Handle cancel action first — does not enqueue a new job
+        // Handle cancel action first
         if (intent.action == ACTION_CANCEL) {
             val rowId = intent.getLongExtra(EXTRA_ROW_ID, -1L)
             if (rowId > 0) {
@@ -149,7 +151,6 @@ class DownloadService : Service() {
                 val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 try { nm.cancel(NOTIF_ID_BASE + rowId.toInt()) } catch (_: Throwable) {}
             }
-            // Don't stopSelf here — there may be other active jobs
             if (activeJobs <= 0) stopSelf()
             return START_NOT_STICKY
         }
@@ -186,7 +187,7 @@ class DownloadService : Service() {
 
         // 2. Wait for yt-dlp to finish initialising (extracts python+yt-dlp on first run)
         if (!ShsTubeApp.ytDlpReady) {
-            updateNotif(notifId, rowId, title, "Initialising yt-dlp engine…", 0, true)
+            updateNotif(notifId, rowId, title, "Initialising yt-dlp engine...", 0, true)
             DownloadRepository.updateProgress(rowId, "initializing", 0, 0L, 0L, 0L)
             val ok = ShsTubeApp.awaitYtDlpReady(timeoutMs = 60_000)
             if (!ok) {
@@ -215,22 +216,33 @@ class DownloadService : Service() {
             addOption("--no-playlist")
             addOption("--no-mtime")
             addOption("--newline")
-            // YouTube anti-bot bypass — modern UA + multi-client extractor fallback.
+            // YouTube anti-bot bypass - modern UA + multi-client extractor fallback
             addOption("--user-agent", USER_AGENT)
-            // ios + web clients bypass the GVS PO Token requirement that blocks the android client
-            // and also bypass PO Token + DRM checks; web as fallback for formats.
+            // ios + web clients bypass the GVS PO-Token requirement that blocks the android client
             addOption("--extractor-args", "youtube:player_client=ios,web")
             addOption("--geo-bypass")
+
+            // ROBUSTNESS: Retry on transient errors (network blips, 503s, throttling)
+            addOption("--retries", "10")
+            addOption("--fragment-retries", "10")
+            // Download fragments in parallel for speed + resilience
+            addOption("--concurrent-fragments", "4")
+            // Fail fast on truly unavailable streams instead of hanging forever
+            addOption("--abort-on-unavailable-fragment")
+            // Skip sponsor segments (intro, outro, self-promo, sponsor)
+            addOption("--sponsorblock-remove", "sponsor,intro,outro,selfpromo")
+
             if (audioOnly) {
                 addOption("-f", formatId ?: "bestaudio/best")
                 addOption("-x")
                 addOption("--audio-format", "mp3")
                 addOption("--audio-quality", "0")
+                // Embed thumbnail into MP3 for music players
+                addOption("--embed-thumbnail")
             } else {
                 addOption("-f", formatId ?: "bestvideo+bestaudio/best")
                 addOption("--merge-output-format", "mp4")
             }
-            addOption("--sponsorblock-remove", "sponsor,intro,outro,selfpromo")
         }
 
         DownloadRepository.updateProgress(rowId, "downloading", 0, 0L, 0L, 0L)
@@ -253,18 +265,16 @@ class DownloadService : Service() {
                             rowId, "downloading", pct, lastSpeed, lastBytes, total
                         )
                     }
-                    val human = humanReadable(lastSpeed) + "/s • " +
+                    val human = humanReadable(lastSpeed) + "/s - " +
                         humanReadable(lastBytes) + " / " + humanReadable(total)
-                    updateNotif(notifId, rowId, title, "$pct%  •  $human", pct, true)
+                    updateNotif(notifId, rowId, title, "$pct%  -  $human", pct, true)
                 }
             }
             // Did the user cancel after we started?
             if (cancelled.remove(rowId)) {
                 updateNotif(notifId, rowId, title, "Cancelled", 0, false)
-                // markFailed already done by killProcessAndCleanup
             } else {
-                // Locate the final file using our unique prefix pattern — much more reliable
-                // than using the most-recently-modified file which can pick up wrong files.
+                // Locate the final file using our unique prefix pattern
                 val prefix = outputPatterns.remove(rowId) ?: "shs_${rowId}_"
                 val finalFile = outDir.listFiles()
                     ?.filter { it.name.startsWith(prefix) && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
@@ -283,17 +293,17 @@ class DownloadService : Service() {
 
                     DownloadRepository.markCompleted(rowId, "completed", cleanFile.absolutePath)
                 } else {
-                    // Fallback: try to find by modification time in case the prefix didn't work
+                    // Fallback: try to find by modification time
                     val fallback = outDir.listFiles()
                         ?.filter { !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") && !it.name.endsWith(".tmp") }
-                        ?.filter { it.length() > 1000 }  // ignore tiny temp files
+                        ?.filter { it.length() > 1000 }
                         ?.maxByOrNull { it.lastModified() }
                     DownloadRepository.markCompleted(rowId, "completed", fallback?.absolutePath)
                 }
-                updateNotif(notifId, rowId, title, "✓ Download complete", 100, false)
+                updateNotif(notifId, rowId, title, "Download complete", 100, false)
             }
         } catch (t: Throwable) {
-            // If user cancelled, the destroyProcessById throws — treat as cancellation, not failure
+            // If user cancelled, the destroyProcessById throws - treat as cancellation, not failure
             if (cancelled.remove(rowId)) {
                 updateNotif(notifId, rowId, title, "Cancelled", 0, false)
             } else {
@@ -306,7 +316,6 @@ class DownloadService : Service() {
             outputPatterns.remove(rowId)
         }
 
-        // Hand the user a tap-to-open notification on completion
         delay(800)
     }
 

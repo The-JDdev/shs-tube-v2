@@ -12,11 +12,11 @@ android {
         applicationId "com.shslab.shstube"
         minSdk 24
         targetSdk 35
-        versionCode 37
-        versionName "2.4.0-fixes"
+        versionCode 38
+        versionName "2.5.0-ytfix"
         vectorDrawables.useSupportLibrary = true
 
-        // Universal APK — ship every ABI
+        // Universal APK - ship every ABI
         ndk {
             abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
         }
@@ -75,8 +75,8 @@ android {
 }
 
 dependencies {
-    // Core library desugaring — provides modern java.* APIs (URLEncoder.encode(String, Charset), etc.) on old Android
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    // Core library desugaring - provides modern java.* APIs on old Android
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
     // Core AndroidX
     implementation 'androidx.core:core-ktx:1.16.0'
@@ -92,31 +92,32 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'androidx.webkit:webkit:1.13.0'
     implementation 'androidx.documentfile:documentfile:1.1.0'
-    // Thumbnail image loading — async, cached, no setup needed
+    // Thumbnail image loading
     implementation 'io.coil-kt:coil:2.7.0'
 
-    // Room — persistent download history (SQLite)
+    // Room - persistent download history (SQLite)
     implementation 'androidx.room:room-runtime:2.7.1'
     implementation 'androidx.room:room-ktx:2.7.1'
     kapt 'androidx.room:room-compiler:2.7.1'
 
     // Coroutines + networking
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
-    // youtubedl-android: yt-dlp packaged as AAR (no Chaquopy needed)
-    implementation 'io.github.junkfood02.youtubedl-android:library:0.17.5'
-    implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.17.5'
+    // youtubedl-android: yt-dlp packaged as AAR
+    // 0.17.6 bundles yt-dlp 2025.x with latest anti-bot workarounds + PO token fixes
+    implementation 'io.github.junkfood02.youtubedl-android:library:0.17.6'
+    implementation 'io.github.junkfood02.youtubedl-android:ffmpeg:0.17.6'
 
-    // libtorrent4j — universal: all 4 ABIs
+    // libtorrent4j - universal: all 4 ABIs
     implementation 'org.libtorrent4j:libtorrent4j:2.1.0-32'
     implementation 'org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-32'
     implementation 'org.libtorrent4j:libtorrent4j-android-arm:2.1.0-32'
     implementation 'org.libtorrent4j:libtorrent4j-android-x86:2.1.0-32'
     implementation 'org.libtorrent4j:libtorrent4j-android-x86_64:2.1.0-32'
 
-    // NewPipe Extractor
-    implementation 'com.github.TeamNewPipe:NewPipeExtractor:v0.24.5'
+    // NewPipe Extractor - v0.24.6 fixes YouTube search (ContentNotAvailableException, Deblocking)
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:v0.24.6'
 
     // Media3 ExoPlayer
     implementation 'androidx.media3:media3-exoplayer:1.7.1'

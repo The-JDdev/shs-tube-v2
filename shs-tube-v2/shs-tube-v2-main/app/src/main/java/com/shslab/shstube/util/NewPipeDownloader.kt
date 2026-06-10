@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit
 /**
  * Minimal OkHttp-backed Downloader implementation for NewPipeExtractor.
  * Mirrors the pattern used by the official NewPipe Android client.
+ *
+ * FIX v2.5: Updated User-Agent to current Chrome version (prevents YouTube
+ * returning 403 for old UA strings). Added connection pool tuning and
+ * longer timeouts for reliability on slow mobile connections.
  */
 class NewPipeDownloader private constructor(private val client: OkHttpClient) : Downloader() {
 
@@ -43,13 +47,19 @@ class NewPipeDownloader private constructor(private val client: OkHttpClient) : 
 
     companion object {
         private const val USER_AGENT =
-            "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/124.0.0.0 Mobile Safari/537.36 SHSTube/2.1"
+            "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/131.0.6778.200 Mobile Safari/537.36"
 
         fun create(): NewPipeDownloader {
             val client = OkHttpClient.Builder()
                 .readTimeout(30, TimeUnit.SECONDS)
                 .connectTimeout(30, TimeUnit.SECONDS)
+                .callTimeout(60, TimeUnit.SECONDS)
+                // Connection pool: keep 5 idle connections alive for 5 minutes
+                // to avoid repeated TCP/TLS handshakes when paginating search results
+                .connectionPool(okhttp3.ConnectionPool(5, 5, TimeUnit.MINUTES))
+                // Retry on connection failures (mobile network blips)
+                .retryOnConnectionFailure(true)
                 .build()
             return NewPipeDownloader(client)
         }
