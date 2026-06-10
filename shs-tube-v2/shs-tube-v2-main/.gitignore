@@ -1,1 +1,32 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Build directories
+build/
+*/build/
+
+# Local configuration
+local.properties
+
+# IDE files
+.idea/
+*.iml
+.gradle/
+
+# Keystore files
+*.jks
+*.keystore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Aider
 .aider*
